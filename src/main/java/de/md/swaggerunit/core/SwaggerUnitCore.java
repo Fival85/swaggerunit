@@ -16,17 +16,24 @@ import io.swagger.models.Swagger;
 import io.swagger.models.auth.AuthorizationValue;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.parser.util.SwaggerDeserializationResult;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import javax.inject.Inject;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class SwaggerUnitCore {
@@ -70,21 +77,22 @@ public class SwaggerUnitCore {
 	}
 
 	/**
-	 * Ignoriere SwaggerUnit bei Exceptions es sei den dies wurde per VM Parameter überschrieben.
+	 * Initialized the SwaggerUnitCore.
+	 * Exception from the initialization process will be hided until the system property swaggerunit.validation.strict is set to "true"
 	 */
 	private void init() {
 		try {
 			init(swaggerUnitConfiguration.getSwaggerSourceOverride(), authentication.getAuth());
 		} catch (Exception ex) {
 			if (ex instanceof RestClientException) {
-				LOGGER.error("Die URL <{}> hat mit einem Fehler geantwortet.", swaggerUnitConfiguration.getSwaggerLoginUrl());
+				LOGGER.error("Exception for http call to {}", swaggerUnitConfiguration.getSwaggerLoginUrl());
 			} else {
-				LOGGER.error("Die Swagger <{}> konnte nicht initializiert werden.",
-						swaggerUnitConfiguration.getSwaggerSourceOverride());
+				LOGGER.error("Swagger from <{}> couldn't be initialized", swaggerUnitConfiguration.getSwaggerSourceOverride());
 			}
 			if (STRICT_VALIDATION_VALUE.equalsIgnoreCase(System.getProperty(STRICT_VALIDATION_KEY))) {
 				throw ex;
 			}
+			// skips the validation per default, until the SwaggerValidation annotation is used in a test
 			System.setProperty(SKIP_VALIDATION_KEY, SKIP_VALIDATION_VALUE);
 		}
 	}
@@ -103,7 +111,7 @@ public class SwaggerUnitCore {
 	}
 
 	private void initSwaggerBasePath() {
-		if(swagger.getBasePath() == null) {
+		if (swagger.getBasePath() == null) {
 			swagger.setBasePath("");
 		}
 	}
@@ -117,12 +125,12 @@ public class SwaggerUnitCore {
 	/**
 	 * Simple function to test, if a string is a valid representation of an URL or not.
 	 *
-	 * @param content -
+	 * @param str - the string to check
 	 * @return true is the string is a valid URL
 	 */
-	private boolean isUrl(String content){
+	private boolean isUrl(String str) {
 		try {
-			new URL(content);
+			new URL(str);
 			return true;
 		} catch (MalformedURLException e) {
 			return false;
@@ -132,10 +140,10 @@ public class SwaggerUnitCore {
 	/**
 	 * Validiert den Request gegen die YAML.
 	 *
-	 * @param method -
-	 * @param uri -
+	 * @param method  -
+	 * @param uri     -
 	 * @param headers -
-	 * @param body -
+	 * @param body    -
 	 */
 	public void validateRequest(String method, URI uri, Map<String, List<String>> headers, String body) {
 		Method requestMethod = Method.valueOf(method);
@@ -152,7 +160,7 @@ public class SwaggerUnitCore {
 				if (split.length == 2) {
 					String key = split[0];
 					String value = split[1];
-					if(parsedQueryParams.containsKey(key)) {
+					if (parsedQueryParams.containsKey(key)) {
 						parsedQueryParams.get(key).add(value);
 					} else {
 						List<String> values = new ArrayList<>();

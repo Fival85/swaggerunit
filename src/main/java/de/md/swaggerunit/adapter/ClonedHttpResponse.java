@@ -40,7 +40,7 @@ public class ClonedHttpResponse implements ClientHttpResponse {
         return response;
     }
 
-    byte[] getRawBody(){
+    public byte[] getRawBody(){
         return body;
     }
 
