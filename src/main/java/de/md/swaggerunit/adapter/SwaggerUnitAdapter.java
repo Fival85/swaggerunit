@@ -6,20 +6,22 @@ import de.md.swaggerunit.usage.ValidationScope;
 /**
  * this interface could be used to connect a http client (used in your junit test) with the {@link SwaggerUnitRule}. The rule
  * calles firstly the validate method and after the test is finished the afterValidation method.
- * 
+ *
  * @author dgoermann
  */
 public interface SwaggerUnitAdapter {
 
 	/**
-	 * Validates the request with the given scopes.
-	 * 
-	 * @param validationScope
+	 * Implement this, to return the request information. SwaggerUnit needs this to validate.
+	 *
+	 * @return
 	 */
-	public void validate(ValidationScope validationScope);
+	RequestDto getRequest();
 
 	/**
-	 * Will be called after the junit test is finished
+	 * Implement this, to return the response information. SwaggerUnit needs this to validate.
+	 * @return
 	 */
-	public void afterValidation();
+	ResponseDto getResponse();
+
 }

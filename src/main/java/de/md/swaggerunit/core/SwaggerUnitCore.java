@@ -12,11 +12,12 @@ import com.atlassian.oai.validator.report.ValidationReport;
 import com.atlassian.oai.validator.report.ValidationReport.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.md.swaggerunit.adapter.RequestDto;
+import de.md.swaggerunit.adapter.ResponseDto;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,7 +40,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Component
 public class SwaggerUnitCore {
 
 	public static final String SKIP_VALIDATION_VALUE = "true";
@@ -197,6 +197,10 @@ public class SwaggerUnitCore {
 		}
 	}
 
+	public void validateRequest(RequestDto requestDto) {
+		validateRequest(requestDto.getMethod(), requestDto.getUri(), requestDto.getHeaders(), requestDto.getBody());
+	}
+
 	/**
 	 * Validiert den Request gegen die YAML.
 	 *
@@ -271,6 +275,11 @@ public class SwaggerUnitCore {
 
 	public ApiOperationMatch getApiOperation(Swagger swagger, String path, Request.Method method) {
 		return new ApiOperationResolver(swagger, null).findApiOperation(path, method);
+	}
+
+	public void validateResponse(RequestDto requestDto, ResponseDto responseDto) {
+		validateResponse(requestDto.getMethod(), responseDto.getStatusCode(), requestDto.getUri(), responseDto.getHeaders(),
+				responseDto.getBody());
 	}
 
 	public void validateResponse(String method, int statusCode, URI uri, Map<String, List<String>> headers, String body) {
