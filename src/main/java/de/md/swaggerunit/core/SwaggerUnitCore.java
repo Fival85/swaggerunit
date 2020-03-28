@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.ResponseDto;
+import de.md.swaggerunit.adapter.classic.SwaggerUnitClassicConfiguration;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import org.slf4j.Logger;
@@ -56,16 +57,6 @@ public class SwaggerUnitCore {
 	private SwaggerRequestResponseValidator validator;
 
 	private Swagger swagger;
-
-	/**
-	 * Initialisiert SwaggerUnitCore und verwendet swaggerDefinition als das für die Validierung maßgebliche Swagger.
-	 *
-	 * @param swaggerDefinition eine Plaintext-Swagger-Definition.
-	 */
-	@Deprecated
-	public SwaggerUnitCore(String swaggerDefinition) {
-		init();
-	}
 
 	/**
 	 * Constructor without automatically initialization for unit-test purposes.
@@ -111,7 +102,10 @@ public class SwaggerUnitCore {
 	}
 
 	private void initSwagger() {
-		swagger = tryToLoadSwaggerFromHttp();
+		swagger = tryToLoadSwaggerDirectly();
+		if (swagger == null) {
+			swagger = tryToLoadSwaggerFromHttp();
+		}
 		if (swagger == null) {
 			swagger = tryToLoadSwaggerFromFile();
 		}
@@ -121,8 +115,23 @@ public class SwaggerUnitCore {
 		initSwaggerBasePath();
 	}
 
+	private String getSwaggerSource() {
+		final String swaggerSourceOverride = swaggerUnitConfiguration.getSwaggerSourceOverride();
+		return (swaggerSourceOverride == null || swaggerSourceOverride.isBlank()) ?
+				swaggerUnitConfiguration.getSwaggerSource() :
+				swaggerSourceOverride;
+	}
+
+	Swagger tryToLoadSwaggerDirectly() {
+		try {
+			return new SwaggerParser().readWithInfo(getSwaggerSource()).getSwagger();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	Swagger tryToLoadSwaggerFromFile() {
-		String swaggerSource = swaggerUnitConfiguration.getSwaggerSource();
+		String swaggerSource = getSwaggerSource();
 		if (swaggerSource == null) {
 			return null;
 		}
@@ -154,16 +163,15 @@ public class SwaggerUnitCore {
 	}
 
 	Swagger tryToLoadSwaggerFromHttp() {
-		String swaggerSourceUrl = swaggerUnitConfiguration.getSwaggerSourceOverride();
+		String swaggerSourceUrl = getSwaggerSource();
 		if (swaggerSourceUrl == null || swaggerSourceUrl.isBlank()) {
 			return null;
 		}
 		if (!isUrl(swaggerSourceUrl)) {
-			throw new RuntimeException("The given swagger uri is not valid");
+			return null;
 		}
 		return new SwaggerParser()
 				.readWithInfo(swaggerSourceUrl, authentication.getAuth().map(Arrays::asList).orElse(null), true).getSwagger();
-
 	}
 
 	void initSwaggerBasePath() {
@@ -173,11 +181,7 @@ public class SwaggerUnitCore {
 	}
 
 	void initValidator() {
-		// for the old deprecated way
-		String swaggerSource = swaggerUnitConfiguration.getSwaggerSourceOverride();
-		if (swaggerSource == null || swaggerSource.isBlank()) {
-			swaggerSource = swaggerUnitConfiguration.getSwaggerSource();
-		}
+		String swaggerSource = getSwaggerSource();
 		Builder builder = SwaggerRequestResponseValidator.createFor(swaggerSource);
 		validator = builder.build();
 	}

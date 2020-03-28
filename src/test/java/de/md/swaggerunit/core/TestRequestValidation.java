@@ -1,15 +1,20 @@
 package de.md.swaggerunit.core;
 
-import java.net.URI;
-import java.util.*;
 import mockit.Expectations;
 import mockit.Injectable;
 import mockit.Tested;
-import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.containsString;
 
 public class TestRequestValidation {
 
@@ -19,11 +24,11 @@ public class TestRequestValidation {
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
 
-	@Injectable SwaggerUnitConfiguration swaggerUnitConfiguration;
+	@Injectable
+	SwaggerUnitConfiguration swaggerUnitConfiguration;
 
-	@Injectable SwaggerAuthentication swaggerAuthentication;
-
-	@Tested(fullyInitialized = true) SwaggerUnitCore swaggerUnitCore;
+	@Tested(fullyInitialized = true)
+	SwaggerUnitCore swaggerUnitCore;
 
 	@Before
 	public void satisfyConstructionRequirements() {
@@ -31,18 +36,15 @@ public class TestRequestValidation {
 			{
 				swaggerUnitConfiguration.getSwaggerSourceOverride();
 				result = SWAGGER_DEFINITION;
-				swaggerAuthentication.getAuth();
-				result = Optional.empty();
 			}
 		};
 	}
 
 	@Test
-	public void testValidation_shouldPass()  {
+	public void testValidation_shouldPass() {
 		URI toTest = URI.create("/v1/contracts/tariffSwap?contractId=mc.123324");
 
-		@SuppressWarnings("serial")
-		Map<String, List<String>> headers = new HashMap<String, List<String>>() {{
+		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<String, List<String>>() {{
 			put("Channel", Collections.singletonList("App"));
 			put("Agent", Collections.singletonList("Fox Mulder"));
 		}};
@@ -91,8 +93,7 @@ public class TestRequestValidation {
 		thrown.expectMessage(containsString(
 				"Query parameter 'contractId' is required on path '/contracts/tariffSwap' but not found in request."));
 		URI toTest = URI.create("/v1/contracts/tariffSwap");
-		@SuppressWarnings("serial")
-		Map<String, List<String>> headers = new HashMap<String, List<String>>() {
+		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<>() {
 			{
 				put("Channel", Collections.singletonList("App"));
 				put("Agent", Collections.singletonList("Fox Mulder"));
@@ -102,11 +103,10 @@ public class TestRequestValidation {
 	}
 
 	@Test
-	public void shouldIgnoreAdditionalHeaders_shouldPass(){
+	public void shouldIgnoreAdditionalHeaders_shouldPass() {
 		URI toTest = URI.create("/v1/contracts/tariffSwap?contractId=mc.123324");
 
-		@SuppressWarnings("serial")
-		Map<String, List<String>> headers = new HashMap<String, List<String>>() {{
+		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<String, List<String>>() {{
 			put("Channel", Collections.singletonList("App"));
 			put("Agent", Collections.singletonList("Fox Mulder"));
 			put("Something", Collections.singletonList("Somewhere"));
@@ -117,11 +117,10 @@ public class TestRequestValidation {
 
 	@Test
 	public void testValidation_withPathParams() {
-		SwaggerUnitCore swaggerUnitCore = new SwaggerUnitCore(SWAGGER_DEFINITION2);
 
 		URI toTest = URI.create("/v1/contracts/reactivation/MC.12345/check");
 
-		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<String, List<String>>() {{
+		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<>() {{
 			put("Channel", Collections.singletonList("App"));
 			put("Agent", Collections.singletonList("Fox Mulder"));
 			put("userInfo", Collections.singletonList("anyUserInfo"));

@@ -1,19 +1,18 @@
 package de.md.swaggerunit.core;
 
-import com.atlassian.oai.validator.SwaggerRequestResponseValidator;
-import com.atlassian.oai.validator.model.Request;
-import com.atlassian.oai.validator.model.SimpleResponse;
-import com.atlassian.oai.validator.report.ValidationReport;
+import mockit.Expectations;
+import mockit.Injectable;
+import mockit.Tested;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import mockit.*;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 /**
  * Created by fpriede on 26.04.2017.
@@ -38,8 +37,6 @@ public class TestResponseValidation {
 			{
 				swaggerUnitConfiguration.getSwaggerSourceOverride();
 				result = TestRequestValidation.SWAGGER_DEFINITION2;
-				swaggerAuthentication.getAuth();
-				result = Optional.empty();
 			}
 		};
 	}
@@ -63,7 +60,8 @@ public class TestResponseValidation {
 
 		Map<String, List<String>> headers = new HashMap<>();
 
-		swaggerUnitCore.validateResponse("GET", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, responseBody);
+		swaggerUnitCore
+				.validateResponse("GET", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, responseBody);
 	}
 
 	@Test
@@ -72,7 +70,8 @@ public class TestResponseValidation {
 
 		Map<String, List<String>> headers = new HashMap<>();
 
-		swaggerUnitCore.validateResponse("GET", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, responseBody);
+		swaggerUnitCore
+				.validateResponse("GET", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, responseBody);
 	}
 
 	/**
