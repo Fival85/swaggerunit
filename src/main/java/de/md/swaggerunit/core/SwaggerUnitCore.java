@@ -13,9 +13,7 @@ import com.atlassian.oai.validator.report.ValidationReport.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.models.Swagger;
-import io.swagger.models.auth.AuthorizationValue;
 import io.swagger.parser.SwaggerParser;
-import io.swagger.parser.util.SwaggerDeserializationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -23,17 +21,23 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class SwaggerUnitCore {
@@ -60,7 +64,13 @@ public class SwaggerUnitCore {
 	 */
 	@Deprecated
 	public SwaggerUnitCore(String swaggerDefinition) {
-		init(swaggerDefinition, Optional.empty());
+		init();
+	}
+
+	/**
+	 * Constructor without automatically initialization for unit-test purposes.
+	 */
+	SwaggerUnitCore() {
 	}
 
 	public SwaggerUnitCore(SwaggerUnitConfiguration swaggerUnitConfiguration) {
@@ -82,12 +92,15 @@ public class SwaggerUnitCore {
 	 */
 	private void init() {
 		try {
-			init(swaggerUnitConfiguration.getSwaggerSourceOverride(), authentication.getAuth());
+			initSwagger();
+			initValidator();
 		} catch (Exception ex) {
 			if (ex instanceof RestClientException) {
 				LOGGER.error("Exception for http call to {}", swaggerUnitConfiguration.getSwaggerLoginUrl());
 			} else {
-				LOGGER.error("Swagger from <{}> couldn't be initialized", swaggerUnitConfiguration.getSwaggerSourceOverride());
+				LOGGER.error(
+						"Swagger from '" + swaggerUnitConfiguration.getSwaggerSourceOverride() + "' couldn't be initialized",
+						ex);
 			}
 			if (STRICT_VALIDATION_VALUE.equalsIgnoreCase(System.getProperty(STRICT_VALIDATION_KEY))) {
 				throw ex;
@@ -97,28 +110,75 @@ public class SwaggerUnitCore {
 		}
 	}
 
-	private void init(String swaggerUriOrFileContents, Optional<AuthorizationValue> auth) {
-		initValidator(swaggerUriOrFileContents, auth);
-		initSwagger(swaggerUriOrFileContents, auth);
-	}
-
-	private void initSwagger(String swaggerUriOrFileContents, Optional<AuthorizationValue> auth) {
-		SwaggerDeserializationResult swaggerDeserializationResult = isUrl(swaggerUriOrFileContents) ?
-				new SwaggerParser().readWithInfo(swaggerUriOrFileContents, auth.map(Arrays::asList).orElse(null), true) :
-				new SwaggerParser().readWithInfo(swaggerUriOrFileContents);
-		swagger = swaggerDeserializationResult.getSwagger();
+	private void initSwagger() {
+		swagger = tryToLoadSwaggerFromHttp();
+		if (swagger == null) {
+			swagger = tryToLoadSwaggerFromFile();
+		}
+		if (swagger == null) {
+			throw new RuntimeException("No swagger could be found. please set a swagger file or a http uri to the swagger");
+		}
 		initSwaggerBasePath();
 	}
 
-	private void initSwaggerBasePath() {
+	Swagger tryToLoadSwaggerFromFile() {
+		String swaggerSource = swaggerUnitConfiguration.getSwaggerSource();
+		if (swaggerSource == null) {
+			return null;
+		}
+		Path swaggerPath;
+		if (swaggerSource.startsWith("file::/")) {
+			swaggerPath = Paths.get(swaggerSource);
+		} else {
+			// load the swagger as resource
+			try {
+				swaggerSource = swaggerSource.startsWith("/") ? swaggerSource.substring(1) : swaggerSource;
+				URL resource = ClassLoader.getSystemResource(swaggerSource);
+				if (resource == null) {
+					throw new RuntimeException("The resource file '" + swaggerSource + "' could be found");
+				}
+				File swaggerFile = new File(resource.toURI());
+				swaggerPath = swaggerFile.toPath();
+			} catch (URISyntaxException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		StringBuilder swaggerContentBuilder = new StringBuilder();
+		try (Stream<String> stream = Files.lines(swaggerPath)) {
+			stream.forEach(s -> swaggerContentBuilder.append(s).append("\n"));
+		} catch (IOException e) {
+			LOGGER.error("Swagger file could not be read: " + swaggerSource, e);
+			throw new RuntimeException("Swagger file could not be read", e);
+		}
+		return new SwaggerParser().readWithInfo(swaggerContentBuilder.toString()).getSwagger();
+	}
+
+	Swagger tryToLoadSwaggerFromHttp() {
+		String swaggerSourceUrl = swaggerUnitConfiguration.getSwaggerSourceOverride();
+		if (swaggerSourceUrl == null || swaggerSourceUrl.isBlank()) {
+			return null;
+		}
+		if (!isUrl(swaggerSourceUrl)) {
+			throw new RuntimeException("The given swagger uri is not valid");
+		}
+		return new SwaggerParser()
+				.readWithInfo(swaggerSourceUrl, authentication.getAuth().map(Arrays::asList).orElse(null), true).getSwagger();
+
+	}
+
+	void initSwaggerBasePath() {
 		if (swagger.getBasePath() == null) {
 			swagger.setBasePath("");
 		}
 	}
 
-	private void initValidator(String swaggerUriOrFileContents, Optional<AuthorizationValue> auth) {
-		Builder builder = SwaggerRequestResponseValidator.createFor(swaggerUriOrFileContents);
-		auth.ifPresent(a -> builder.withAuthHeaderData(a.getKeyName(), a.getValue()));
+	void initValidator() {
+		// for the old deprecated way
+		String swaggerSource = swaggerUnitConfiguration.getSwaggerSourceOverride();
+		if (swaggerSource == null || swaggerSource.isBlank()) {
+			swaggerSource = swaggerUnitConfiguration.getSwaggerSource();
+		}
+		Builder builder = SwaggerRequestResponseValidator.createFor(swaggerSource);
 		validator = builder.build();
 	}
 
@@ -228,5 +288,23 @@ public class SwaggerUnitCore {
 		} else {
 			LOGGER.info("Response für URI: {} wurde nicht validiert.", uri);
 		}
+	}
+
+	/**
+	 * Only for unit testing purposes
+	 *
+	 * @param swaggerUnitConfiguration
+	 */
+	void setSwaggerUnitConfiguration(SwaggerUnitConfiguration swaggerUnitConfiguration) {
+		this.swaggerUnitConfiguration = swaggerUnitConfiguration;
+	}
+
+	/**
+	 * Only for unit testing purposes
+	 *
+	 * @return
+	 */
+	SwaggerRequestResponseValidator getValidator() {
+		return validator;
 	}
 }

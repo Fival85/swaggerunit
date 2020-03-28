@@ -22,17 +22,20 @@ import org.springframework.web.client.RestTemplate;
 @ComponentScan("de.md.swaggerunit")
 public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfiguration {
 
-	@Value("${swaggerSourceOverride}")
+	@Value("${swaggerSourceOverride:}")
 	private String swaggerSourceOverride;
 
-	@Value("${swaggerLoginUrl}")
+	@Value("${swaggerLoginUrl:}")
 	private String swaggerLoginUrl;
 
-	@Value("${swaggerLoginUsername}")
+	@Value("${swaggerLoginUsername:}")
 	private String swaggerLoginUsername;
 
-	@Value("${swaggerLoginPassword}")
+	@Value("${swaggerLoginPassword:}")
 	private String swaggerLoginPassword;    //NOSONAR
+
+	@Value("${swagger.source:}")
+	private String swaggerSource;
 
 	@Override
 	public String getSwaggerSourceOverride() {
@@ -52,6 +55,11 @@ public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfigurat
 	@Override
 	public String getSwaggerLoginPassword() {
 		return swaggerLoginPassword;
+	}
+
+	@Override
+	public String getSwaggerSource() {
+		return swaggerSource;
 	}
 
 	@Bean

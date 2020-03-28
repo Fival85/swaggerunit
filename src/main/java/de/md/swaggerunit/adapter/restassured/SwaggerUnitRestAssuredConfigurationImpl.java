@@ -53,6 +53,11 @@ public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfi
 		return swaggerLoginPassword;
 	}
 
+	@Override
+	public String getSwaggerSource() {
+		return null;
+	}
+
 	public void setSwaggerSourceOverride(String swaggerSourceOverride) {
 		this.swaggerSourceOverride = swaggerSourceOverride;
 	}

@@ -8,11 +8,36 @@ package de.md.swaggerunit.core;
 
 public interface SwaggerUnitConfiguration {
 
-	public String getSwaggerSourceOverride();
+	/**
+	 * @return
+	 * @deprecated please use {@link SwaggerUnitConfiguration#getSwaggerSource()}
+	 */
+	@Deprecated
+	String getSwaggerSourceOverride();
 
-	public String getSwaggerLoginUrl();
+	String getSwaggerLoginUrl();
 
-	public String getSwaggerLoginUsername();
+	String getSwaggerLoginUsername();
 
-	public String getSwaggerLoginPassword();
+	String getSwaggerLoginPassword();
+
+	/**
+	 * Implement this method to set the source of the swagger.
+	 * The URL can be an absolute HTTP/HTTPS URL, a File URL or a classpath location (without the classpath: scheme).
+	 * <p>
+	 * For example:
+	 * <pre>
+	 *  // Create from a publicly hosted HTTP location
+	 *  "http://api.myservice.com/swagger.json"
+	 *  // Create from a file on the local filesystem
+	 *  "file://Users/myuser/tmp/swagger.json"
+	 *  // Create from a classpath resource in the /api package
+	 *  "/api/swagger.json"
+	 *  // Create from a swagger JSON payload
+	 *  "{\"swagger\": \"2.0\", ...}"
+	 *  </pre>
+	 *
+	 * @return the swagger source of the swagger
+	 */
+	String getSwaggerSource();
 }

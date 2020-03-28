@@ -1,0 +1,42 @@
+swagger: "2.0"
+info:
+  title: "simple test swagger 2.0 yaml"
+  version: "1.0"
+consumes:
+  - application/json
+produces:
+  - application/json
+basePath: /test
+paths:
+
+  "/simpleString":
+    get:
+      summary: returns simply a string
+      parameters:
+        - name: required
+          required: true
+          type: string
+          in: query
+      responses:
+        200:
+          description: Zum InteractionType gehörendes Schema
+          schema:
+            $ref: "#/definitions/simpleString"
+  "/simpleObject":
+    get:
+      summary: returns a simple object
+      responses:
+        200:
+          description: Die möglichen Spezialisierungen
+          schema:
+            $ref: "#/definitions/simpleObject"
+
+definitions:
+  simpleString:
+    type: string
+    description: simply the string
+  simpleObject:
+    type: object
+    properties:
+      simpleField:
+        type: string

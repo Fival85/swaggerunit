@@ -1,0 +1,9 @@
+server:
+  port: 8100
+spring:
+  application:
+    name: SwaggerUnitTestService
+swagger:
+  validation:
+    strict: "true"
+  source: "/simpleYaml.yml"
