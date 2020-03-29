@@ -170,6 +170,10 @@ public class SwaggerUnitCore {
 		if (headers != null) {
 			headers.forEach(requestBuilder::withHeader);
 		}
+		// the used validator from Atlassian does not validate if no content-type is set, so we set a fallback
+		if (headers == null || !headers.containsKey("content-type")) {
+			requestBuilder.withHeader("content-type", getFallbackContentTypeHeaderValue());
+		}
 		String rawQuery = uri.getQuery();
 		Map<String, List<String>> parsedQueryParams = new HashMap<>();
 		if (rawQuery != null && !rawQuery.isEmpty()) {

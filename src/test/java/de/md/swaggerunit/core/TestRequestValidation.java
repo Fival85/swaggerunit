@@ -64,6 +64,20 @@ public class TestRequestValidation {
 	}
 
 	@Test
+	public void testMissingBodyFields() {
+		thrown.expect(SwaggerValidationException.class);
+		thrown.expectMessage(containsString("Object has missing required properties ([\"contractId\",\"tariffId\"])"));
+		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<String, List<String>>() {
+			{
+				put("Channel", Collections.singletonList("App"));
+				put("Agent", Collections.singletonList("anyone"));
+			}
+		};
+		URI toTest = URI.create("/v1/contracts/tariffSwap");
+		swaggerUnitCore.validateRequest("POST", toTest, headers, "{}");
+	}
+
+	@Test
 	public void testErrorMessageGetsAdditionalInformationOnMissingHeaders() {
 		thrown.expect(SwaggerValidationException.class);
 		thrown.expectMessage(containsString("Mandatory header \"Agent\" is not set."));
