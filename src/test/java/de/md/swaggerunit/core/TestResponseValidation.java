@@ -12,7 +12,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Created by fpriede on 26.04.2017.
@@ -25,9 +24,6 @@ public class TestResponseValidation {
 	@Injectable
 	SwaggerUnitConfiguration swaggerUnitConfiguration;
 
-	@Injectable
-	SwaggerAuthentication swaggerAuthentication;
-
 	@Tested(fullyInitialized = true)
 	SwaggerUnitCore swaggerUnitCore;
 
@@ -36,7 +32,7 @@ public class TestResponseValidation {
 		new Expectations() {
 			{
 				swaggerUnitConfiguration.getSwaggerSourceOverride();
-				result = TestRequestValidation.SWAGGER_DEFINITION2;
+				result = "swaggerDefinition2.yml";
 			}
 		};
 	}

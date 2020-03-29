@@ -24,6 +24,7 @@ public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfi
 	private String swaggerLoginUsername;
 
 	private String swaggerLoginPassword;    //NOSONAR
+	private String fallbackContentType;
 
 	public SwaggerUnitRestAssuredConfigurationImpl(String swaggerSourceOverride, String swaggerLoginUrl,
 			String swaggerLoginUsername, String swaggerLoginPassword) {
@@ -58,6 +59,11 @@ public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfi
 		return null;
 	}
 
+	@Override
+	public String getFallbackContentType() {
+		return fallbackContentType;
+	}
+
 	public void setSwaggerSourceOverride(String swaggerSourceOverride) {
 		this.swaggerSourceOverride = swaggerSourceOverride;
 	}
@@ -72,6 +78,10 @@ public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfi
 
 	public void setSwaggerLoginPassword(String swaggerLoginPassword) {
 		this.swaggerLoginPassword = swaggerLoginPassword;
+	}
+
+	public void setFallbackContentType(String fallbackContentType) {
+		this.fallbackContentType = fallbackContentType;
 	}
 
 	@Bean

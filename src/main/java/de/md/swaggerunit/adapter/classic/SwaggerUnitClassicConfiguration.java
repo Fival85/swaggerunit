@@ -13,6 +13,7 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 	private String swaggerLoginPassword;    //NOSONAR
 
 	private String swaggerSource;
+	private String fallbackContentType;
 
 	public SwaggerUnitClassicConfiguration() {
 	}
@@ -45,6 +46,12 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 		return swaggerSourceOverride;
 	}
 
+	/**
+	 * The used OpenApi-Validator does not validate request without a content-type header. If the response do not have
+	 * anyone we could manipulate the content-type header. With this value you could override the default fallback value "application/json".
+	 *
+	 * @param swaggerSourceOverride the wished fallback content-type header value
+	 */
 	public void setSwaggerSourceOverride(String swaggerSourceOverride) {
 		this.swaggerSourceOverride = swaggerSourceOverride;
 	}
@@ -102,5 +109,14 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 	 */
 	public void setSwaggerSource(String swaggerSource) {
 		this.swaggerSource = swaggerSource;
+	}
+
+	@Override
+	public String getFallbackContentType() {
+		return fallbackContentType;
+	}
+
+	public void setFallbackContentType(String fallbackContentType) {
+		this.fallbackContentType = fallbackContentType;
 	}
 }

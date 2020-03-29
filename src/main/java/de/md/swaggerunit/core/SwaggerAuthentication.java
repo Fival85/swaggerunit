@@ -6,15 +6,16 @@
 // #***************************************************************************
 package de.md.swaggerunit.core;
 
-import io.swagger.models.auth.AuthorizationValue;
-import java.util.Optional;
-import javax.inject.Inject;
+import io.swagger.v3.parser.core.models.AuthorizationValue;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import javax.inject.Inject;
+import java.util.Optional;
 
 @Component
 public class SwaggerAuthentication {
@@ -24,12 +25,9 @@ public class SwaggerAuthentication {
 	private static final String HEADER_NAME_AUTHORIZATION = "Authorization";
 
 	private static final String AUTHORIZATION_VALUE_TYPE_HEADER = "header";
-
-	private Optional<String> authToken = Optional.empty();
-
 	private final RestTemplate swaggerUnitHttpClient;
-
 	private final SwaggerUnitConfiguration swaggerUnitConfiguration;
+	private Optional<String> authToken = Optional.empty();
 
 	@Inject
 	public SwaggerAuthentication(RestTemplate swaggerUnitHttpClient, SwaggerUnitConfiguration swaggerUnitConfiguration) {
@@ -62,8 +60,8 @@ public class SwaggerAuthentication {
 
 	private SwaggerAuthenticationResponse authenticate() throws RestClientException {
 		MultiValueMap<String, String> loginForm = createLoginForm();
-		return swaggerUnitHttpClient.postForObject(swaggerUnitConfiguration.getSwaggerLoginUrl(), loginForm,
-				SwaggerAuthenticationResponse.class);
+		return swaggerUnitHttpClient
+				.postForObject(swaggerUnitConfiguration.getSwaggerLoginUrl(), loginForm, SwaggerAuthenticationResponse.class);
 	}
 
 	private MultiValueMap<String, String> createLoginForm() {

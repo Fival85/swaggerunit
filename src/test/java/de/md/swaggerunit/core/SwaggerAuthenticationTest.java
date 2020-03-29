@@ -12,11 +12,11 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Optional;
 
+import io.swagger.v3.parser.core.models.AuthorizationValue;
 import org.junit.Test;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import io.swagger.models.auth.AuthorizationValue;
 import mockit.Expectations;
 import mockit.Injectable;
 import mockit.Mocked;

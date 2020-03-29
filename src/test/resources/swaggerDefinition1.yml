@@ -1,0 +1,263 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: change
+  description: change-Api
+paths:
+  /v1/contracts/tariffSwap:
+    get:
+      tags:
+        - tariffs
+      summary: Tarifwechselangebote.
+      description: Liefert für die angebene Vertragsnummer die Tarifwechselangebote.
+      parameters:
+        - name: contractId
+          in: query
+          description: Eindeutige Vertragsnummer
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximale Anzahl der gelieferten Einträge,
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 10
+        - name: offset
+          in: query
+          description: Anzahl der zu überspringenden Einträge, bzw Startposition in der
+            Ergebnisliste .
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: Channel
+          in: header
+          required: true
+          description: Der Offer-Channel z.B. MYMCIS, PRIVATESERVICE, [...]
+          schema:
+            type: string
+        - name: Agent
+          in: header
+          description: Der User (Agent, Kunde, etc) welcher das Cart buchen möchte
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/TariffOrders"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TariffOrders"
+        "400":
+          description: Fehlerhafte Anfrage
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Der User hat nicht das Recht die Aktion durchzuführen
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Backend (teilweise) nicht erreichbar.
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - tariffs
+      summary: Bestellt einen Tarifwechsel.
+      description: Zu der angegebenen Vertragsnummer wird ein Tarifwechsel durchgeführt.
+      parameters:
+        - name: Channel
+          in: header
+          required: true
+          description: Der Offer-Channel z.B. MYMCIS, PRIVATESERVICE, [...]
+          schema:
+            type: string
+        - name: Agent
+          in: header
+          description: Der User (Agent, Kunde, etc) welcher das Cart buchen möchte
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json;charset=utf-8:
+            schema:
+              $ref: "#/components/schemas/TariffOrder"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TariffOrder"
+        required: true
+      responses:
+        "201":
+          description: Ok
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/TariffOrders"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TariffOrders"
+        "400":
+          description: Fehlerhafte Anfrage
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Der User hat nicht das Recht die Aktion durchzuführen
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Backend (teilweise) nicht erreichbar.
+          content:
+            application/json;charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    TariffOrder:
+      description: Daten für Tarifwechsel
+      type: object
+      required:
+        - tariffId
+        - contractId
+      properties:
+        contractId:
+          type: string
+        tariffId:
+          type: string
+          description: Id des Vertrages in dem gewechelt werden soll
+          example: VA100D1|11409
+        street:
+          type: string
+          description: Straße ohne Hausnummer, nur bei Homezone anzugeben.
+          example: Hollerstrasse
+        streetNumber:
+          type: string
+          description: Hausnummer, nur bei Homezone anzugeben.
+          example: 17a
+        postalCode:
+          type: string
+          description: Postleitzahl, nur bei Homezone anzugeben.
+          example: "21897"
+        city:
+          type: string
+          description: Stadt, nur bei Homezone anzugeben.
+          example: Hamburg
+    TariffOrders:
+      description: Liste aus Vertragsangeboten
+      type: object
+      properties:
+        tariffs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tariffs"
+    Tariffs:
+      description: Tarifwechselangebot
+      type: object
+      required:
+        - id
+        - label
+        - priceRecurrent
+        - fee
+      properties:
+        id:
+          type: string
+          description: Eindeutige Tarifkennzeichnung.
+          example: "213124"
+        label:
+          type: string
+          description: Tarif-Anzeigetext.
+          example: RED 4 GB mit Handy 10
+        priceRecurrent:
+          type: string
+          description: Monatspreis.
+          example: "39.99"
+          format: number
+        fee:
+          type: string
+          description: Wechselgebühr.
+          example: "19.99"
+        date:
+          type: string
+          format: date-time
+          description: Ausführungsdatum zu dem eine Tarifwechsel durchgeführt werden kann.
+        netCode:
+          type: string
+          description: Netz
+          example: D1
+        mustProlongate:
+          type: boolean
+          description: Laufzeitverlängerung
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+          description: Der HTTP-Status Code
+        code:
+          type: integer
+          description: Benutzerdefinierte Fehlercode
+        alphaCode:
+          type: string
+          description: Benutzerdefinierte alphanumerischer Fehlercode
+        moreInfo:
+          type: string
+          description: Zusätzliche Informationen zu der Fehlermeldung
+        message:
+          type: string
+          description: Die eigentliche Fehlermeldung
+        developerMessages:
+          type: array
+          description: Eine Liste von Nachrichten für die Entwickler. Diese Informationen
+            sollten nicht nach außen getragen werden.
+          items:
+            type: string
+        property:
+          type: string
+          description: Welche property betroffen ist.
+        origin:
+          type: string
+          description: "Ursprung des Fehlers (Servicename, Servername, ...) "
+        timestamp:
+          type: string
+          format: date-time
+          description: Der Zeitpunkt an dem der Fehler aufgetreten ist
+        requestId:
+          type: string
+          description: RequestId für Analysezwecke

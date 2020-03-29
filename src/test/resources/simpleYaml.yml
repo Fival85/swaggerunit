@@ -6,10 +6,9 @@ consumes:
   - application/json
 produces:
   - application/json
-basePath: /test
 paths:
 
-  "/simpleString":
+  "/test/simpleString":
     get:
       summary: returns simply a string
       parameters:
@@ -22,7 +21,7 @@ paths:
           description: Zum InteractionType gehörendes Schema
           schema:
             $ref: "#/definitions/simpleString"
-  "/simpleObject":
+  "/test/simpleObject":
     get:
       summary: returns a simple object
       responses:

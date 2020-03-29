@@ -1,0 +1,186 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Kündigungsrücknahme
+  description: >
+    Die API ermöglicht es DOM-Verträge mit dem Kündigungsstatus AktP (zukünftige
+    Kündigungen) zurückzunehmen.
+
+
+    Die Endpunkte dieser API umfassen folgende Aktionen im Bereich der Kündigungsrücknahme:
+      - Vertragsprüfung für Kündigungsrücknahme
+      - Kündigungsrücknahme
+tags:
+  - name: Kündigungsrücknahme
+    description: Service zur Zurücknahme einer ordentlichen Kündigung bei DOM-Verträgen
+paths:
+  "/v1/contracts/reactivation/{contractId}/check":
+    get:
+      tags:
+        - Kündigungsrücknahme
+      summary: Vertragsprüfung für Kündigungsrücknahme
+      description: Checkt ob die Kündigung für einen Vertrag rückgängig gemacht werden kann.
+      parameters:
+        - $ref: "#/components/parameters/userInfo"
+        - name: contractId
+          in: path
+          description: Eindeutige Vertragsnummer
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Validierungs-Ergebniss.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+        default:
+          description: Fehler
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/contracts/reactivation:
+    post:
+      tags:
+        - Kündigungsrücknahme
+      summary: Kündigungsrücknahme
+      description: Ordentliche Kündigung bei einem DOM-Vertrag wird rückgängig gemacht.
+      parameters:
+        - $ref: "#/components/parameters/userInfo"
+        - name: channel
+          in: header
+          description: Eingangskanal über den die Anfrage gesendet wird.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                contractId:
+                  description: Eindeutige Vertragsnummer
+                  type: string
+        required: true
+      responses:
+        "201":
+          description: Vertrag erfolgreich abgegeben.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReactivateContract"
+        default:
+          description: Fehler
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  parameters:
+    contractId:
+      name: contractId
+      in: path
+      description: Eindeutige Vertragsnummer
+      required: true
+      schema:
+        type: string
+    userInfo:
+      name: userInfo
+      in: header
+      description: Vom Proxy zu setzende Benutzer-Information. Wird für Autorisierung
+        genutzt.
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: /v1/oidc/token
+          scopes:
+            customer: User ist Kunde und hat daher Zugriff auf eigene Daten und Prozesse
+            agent: User ist Agent, ggf. Prüfung auf erlaubte/nicht erlaubte Kunden
+              und Gruppen
+            partner: User ist Händler, ggf. Prüfunng, ob
+              Name/Geburtsdatum/Kundennummer-Token vorliegt
+  schemas:
+    Error:
+      type: object
+      required:
+        - errorCode
+        - message
+      properties:
+        httpStatus:
+          type: integer
+          description: Wiederholung des HTTP-Status-Codes. (Identisch zur Headerausgabe.)
+          example: 404
+        errorCode:
+          type: integer
+          description: Eindeutiger numerischer Fehler-Code.
+          example: 5006
+        alphaCode:
+          type: string
+          description: Eindeutiger String zum Identifizieren des Fehlers.
+          example: NOT_AUTHENTICATED
+        moreInfo:
+          type: string
+          format: uri
+          description: Link auf eine Dokumentation zu dem Fehler.
+        message:
+          type: string
+          description: Eine lesbare Fehlermeldung, die man in einem Frontend anzeigen kann.
+            (deutsch)
+          example: Authentifizierungsdaten ungültig
+        developerMessage:
+          type: string
+          description: Detailliertere Fehlermeldung für Entwickler.
+          example: Der Endpunkt verlangt eine Authentifizierung. Es erfolgt die
+            Umleitung zur Anmeldung.
+        property:
+          type: string
+          description: Das Property / der Parameter der den Fehler verursacht hat.
+          example: User
+        origin:
+          type: string
+          description: Ursprung des Fehlers.
+          example: cxe-1767628-8738-a7667tf
+        timestamp:
+          type: string
+          format: date-time
+          description: Der Zeitpunkt, an dem der Fehler aufgetreten ist.
+          example: 2017-10-17T12:13:33.887Z
+    ErrorCodes:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Grund für Invalides Ergebnis in Deutsch.
+          example: Die Vertragsnummer konnte nicht gefunden werden.
+        errorCode:
+          type: integer
+          description: Eindeutiger Fehler Code.
+          example: 10500
+    ValidationResult:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: Ergebnis der Validierung.
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorCodes"
+    ReactivateContract:
+      type: object
+      required:
+        - taskId
+      properties:
+        taskId:
+          type: string
+          description: Eindeutige Task-ID.
+          example: 603038899

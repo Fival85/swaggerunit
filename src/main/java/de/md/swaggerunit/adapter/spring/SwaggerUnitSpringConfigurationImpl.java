@@ -34,8 +34,10 @@ public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfigurat
 	@Value("${swaggerLoginPassword:}")
 	private String swaggerLoginPassword;    //NOSONAR
 
-	@Value("${swagger.source:}")
+	@Value("${swaggerunit.source:}")
 	private String swaggerSource;
+	@Value("${swaggerunit.fallbackContentType:")
+	private String fallbackContentType;
 
 	@Override
 	public String getSwaggerSourceOverride() {
@@ -60,6 +62,11 @@ public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfigurat
 	@Override
 	public String getSwaggerSource() {
 		return swaggerSource;
+	}
+
+	@Override
+	public String getFallbackContentType() {
+		return fallbackContentType;
 	}
 
 	@Bean

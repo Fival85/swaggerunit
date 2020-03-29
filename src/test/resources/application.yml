@@ -3,7 +3,7 @@ server:
 spring:
   application:
     name: SwaggerUnitTestService
-swagger:
+swaggerunit:
   validation:
     strict: "true"
   source: "/simpleYaml.yml"

@@ -40,4 +40,12 @@ public interface SwaggerUnitConfiguration {
 	 * @return the swagger source of the swagger
 	 */
 	String getSwaggerSource();
+
+	/**
+	 * The used OpenApi-Validator does not validate request without a content-type header. If the response do not have
+	 * anyone we could manipulate the content-type header. With this value you could override the default fallback value "application/json".
+	 *
+	 * @return the wished fallback content-type header value
+	 */
+	String getFallbackContentType();
 }
