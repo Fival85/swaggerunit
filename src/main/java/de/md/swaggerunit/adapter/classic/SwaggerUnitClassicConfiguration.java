@@ -2,6 +2,8 @@ package de.md.swaggerunit.adapter.classic;
 
 import de.md.swaggerunit.core.SwaggerUnitConfiguration;
 
+import java.util.List;
+
 public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration {
 
 	private String swaggerSourceOverride;
@@ -14,6 +16,8 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 
 	private String swaggerSource;
 	private String fallbackContentType;
+	private Boolean ignoreUnknownPathCalls;
+	private List<String> validationPathIgnoreList;
 
 	public SwaggerUnitClassicConfiguration() {
 	}
@@ -118,5 +122,33 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 
 	public void setFallbackContentType(String fallbackContentType) {
 		this.fallbackContentType = fallbackContentType;
+	}
+
+	@Override
+	public Boolean getIgnoreUnknownPathCalls() {
+		return ignoreUnknownPathCalls;
+	}
+
+	public void setIgnoreUnknownPathCalls(Boolean ignoreUnknownPathCalls) {
+		this.ignoreUnknownPathCalls = ignoreUnknownPathCalls;
+	}
+
+	/**
+	 * If {@link SwaggerUnitConfiguration#getIgnoreUnknownPathCalls()} is not set or set to <tt>true</tt>,
+	 * all request calls will be validated. Even if this not exists in the swagger/openAPI definition.
+	 * If you want to ignore a defined set of path, you could set here a list of regular expressions.
+	 * <p>
+	 * This is a nice feature, if you want to have the surety that all necessary request will be validated.
+	 * </p>
+	 *
+	 * @return a list of regular expressions of paths to be ignored while validation
+	 */
+	@Override
+	public List<String> getValidationPathIgnoreList() {
+		return validationPathIgnoreList;
+	}
+
+	public void setValidationPathIgnoreList(List<String> validationPathIgnoreList) {
+		this.validationPathIgnoreList = validationPathIgnoreList;
 	}
 }

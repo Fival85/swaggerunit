@@ -6,6 +6,8 @@
 // #***************************************************************************
 package de.md.swaggerunit.core;
 
+import java.util.List;
+
 public interface SwaggerUnitConfiguration {
 
 	/**
@@ -48,4 +50,23 @@ public interface SwaggerUnitConfiguration {
 	 * @return the wished fallback content-type header value
 	 */
 	String getFallbackContentType();
+
+	/**
+	 * Per default, all requested uris will be validated. Set this value to true, to validate only in the swagger/openAPI defined paths. Default is 'false'
+	 *
+	 * @return boolean
+	 */
+	Boolean getIgnoreUnknownPathCalls();
+
+	/**
+	 * If {@link SwaggerUnitConfiguration#getIgnoreUnknownPathCalls()} is not set or set to <tt>true</tt>,
+	 * all request calls will be validated. Even if this not exists in the swagger/openAPI definition.
+	 * If you want to ignore a defined set of paths, you could set here a list of regular expressions for the request.
+	 * <p>
+	 * This is a nice feature, if you want to have the surety that all necessary request will be validated and known issues manuel be ignored.
+	 * </p>
+	 *
+	 * @return a list of regular expressions of paths to be ignored while validation
+	 */
+	List<String> getValidationPathIgnoreList();
 }

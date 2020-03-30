@@ -40,6 +40,7 @@ public class SwaggerUnitCore {
 	public static final String FALLBACK_CONTENT_TYPE_HEADER_VALUE = "application/json";
 	private static final String STRICT_VALIDATION_KEY = "swaggerunit.validation.strict";
 	private static final String STRICT_VALIDATION_VALUE = "true";
+	private static final boolean DEFAULT_IGNORE_UNKNOWN_PATH_CALLS = false;
 	private static final Logger LOGGER = LoggerFactory.getLogger(SwaggerUnitCore.class);
 
 	private SwaggerAuthentication authentication;
@@ -68,6 +69,7 @@ public class SwaggerUnitCore {
 		this.authentication = authentication;
 		init();
 	}
+	// Initialisation
 
 	/**
 	 * Initialized the SwaggerUnitCore.
@@ -152,6 +154,8 @@ public class SwaggerUnitCore {
 		}
 	}
 
+	// Validation
+
 	public void validateRequest(RequestDto requestDto) {
 		validateRequest(requestDto.getMethod(), requestDto.getUri(), requestDto.getHeaders(), requestDto.getBody());
 	}
@@ -198,6 +202,8 @@ public class SwaggerUnitCore {
 		ValidationReport validationReport = validator.validateRequest(simpleRequest);
 
 		ApiOperationMatch apiOperation = getApiOperation(openAPI, uri.getPath(), Method.valueOf(method));
+		validationReport = cleanUpValidationReport(validationReport, apiOperation);
+		//TODO: move this to a method called by cleanUpValidationReport and create a configuration value for this feature
 		if (apiOperation.isPathFound() && apiOperation.isOperationAllowed()) {
 			Collection<Message> validationHeaderMessages = apiOperation.getApiOperation().getOperation().getParameters()
 					.stream()
@@ -206,19 +212,45 @@ public class SwaggerUnitCore {
 							String.format("Mandatory header \"%s\" is not set.", param.getName())))
 					.collect(Collectors.toList());
 			ValidationReport validationHeaderReport = ValidationReport.from(validationHeaderMessages);
-
-			ValidationReport mergedValidationReport = validationReport.merge(validationHeaderReport);
-			processValidationReport(mergedValidationReport);
-		} else {
-			LOGGER.info("Request für URI: {} wurde nicht validiert.", uri);
+			validationReport = validationReport.merge(validationHeaderReport);
 		}
+		processValidationReport(validationReport);
+	}
+
+	private ValidationReport cleanUpValidationReport(ValidationReport validationReport, ApiOperationMatch apiOperation) {
+		return checkForUnknownPathCalls(validationReport);
+	}
+
+	private ValidationReport checkForUnknownPathCalls(ValidationReport validationReport) {
+		if (shouldUnknownPathCallBeIgnored()) {
+			final List<Message> filteredMessages = validationReport.getMessages().stream()
+					.filter(message -> !"validation.request.path.missing".equals(message.getKey()))
+					.collect(Collectors.toList());
+			return ValidationReport.from(filteredMessages);
+		} else {
+			if (swaggerUnitConfiguration.getValidationPathIgnoreList() != null && !swaggerUnitConfiguration
+					.getValidationPathIgnoreList().isEmpty()) {
+				final List<Message> filteredMessages = swaggerUnitConfiguration.getValidationPathIgnoreList().stream()
+						.map(regex -> validationReport.getMessages().stream()
+								// filter for missing path calls with the configured regular expressions
+								.filter(message -> !"validation.request.path.missing".equals(message.getKey())  //
+										|| !message.getMessage().matches(regex)) //
+								// convert the List<List<Message>> to List<Message>
+								.collect(Collectors.toList())).flatMap(List::stream).collect(Collectors.toList());
+				return ValidationReport.from(filteredMessages);
+			}
+		}
+		return validationReport;
+	}
+
+	private boolean shouldUnknownPathCallBeIgnored() {
+		final Boolean ignoreUnknownPathCalls = swaggerUnitConfiguration.getIgnoreUnknownPathCalls();
+		return ignoreUnknownPathCalls == null ? DEFAULT_IGNORE_UNKNOWN_PATH_CALLS : ignoreUnknownPathCalls;
 	}
 
 	private void processValidationReport(ValidationReport validationReport) {
 		try {
-			if (LOGGER.isInfoEnabled()) {
-				LOGGER.info("Validierungsergebnis SwaggerUnit: {}", new ObjectMapper().writeValueAsString(validationReport));
-			}
+			LOGGER.info("Validierungsergebnis SwaggerUnit: {}", new ObjectMapper().writeValueAsString(validationReport));
 		} catch (JsonProcessingException e) {
 			LOGGER.error("Das Validierungsergebnis von SwaggerUnit konnte nicht ausgegeben werden.", e);
 		}
@@ -268,6 +300,8 @@ public class SwaggerUnitCore {
 				FALLBACK_CONTENT_TYPE_HEADER_VALUE :
 				wishedFallbackContentType;
 	}
+
+	// Testing purpose
 
 	/**
 	 * Only for unit testing purposes

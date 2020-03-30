@@ -18,6 +18,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
 @Configuration
 @ComponentScan("de.md.swaggerunit")
 public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfiguration {
@@ -38,6 +40,10 @@ public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfigurat
 	private String swaggerSource;
 	@Value("${swaggerunit.fallbackContentType:")
 	private String fallbackContentType;
+	@Value("${swaggerunit.validation.ignoreUnknownPathCalls")
+	private Boolean ignoreUnknownPathCalls;
+	@Value("${swaggerunit.validation.paths.ignorelist")
+	private List<String> validationPathIgnoreList;
 
 	@Override
 	public String getSwaggerSourceOverride() {
@@ -67,6 +73,16 @@ public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfigurat
 	@Override
 	public String getFallbackContentType() {
 		return fallbackContentType;
+	}
+
+	@Override
+	public Boolean getIgnoreUnknownPathCalls() {
+		return ignoreUnknownPathCalls;
+	}
+
+	@Override
+	public List<String> getValidationPathIgnoreList() {
+		return validationPathIgnoreList;
 	}
 
 	@Bean

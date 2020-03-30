@@ -63,6 +63,49 @@ public class TestRequestValidation {
 		swaggerUnitCore.validateRequest("GET", toTest, headers, null);
 	}
 
+	/**
+	 * Tests if per default every request will be validate, even if it is not in the swagger definition.
+	 */
+	@Test
+	public void testMissingPathWithoutIgnoringUnknownPaths() {
+		thrown.expect(SwaggerValidationException.class);
+		thrown.expectMessage(containsString("No API path found that matches request '/v1/notexisting'."));
+		URI toTest = URI.create("/v1/notexisting");
+		swaggerUnitCore.validateRequest("GET", toTest, null, "{}");
+	}
+
+	/**
+	 * Tests if an unknown path call will not be ignored by swaggerunit, if the configuration key is set to "true".
+	 */
+	@Test
+	public void testMissingPathWithIgnoringUnknownPaths() {
+		new Expectations() {
+			{
+				swaggerUnitConfiguration.getIgnoreUnknownPathCalls();
+				result = true;
+			}
+		};
+		URI toTest = URI.create("/v1/notexisting");
+		swaggerUnitCore.validateRequest("GET", toTest, null, "{}");
+	}
+
+	/**
+	 * Tests if an unknown path call will be ignored by swaggerunit, if the configuration key is set to "false", but the blacklist containts the path.
+	 */
+	@Test
+	public void testMissingPathOnBlacklist() {
+		new Expectations() {
+			{
+				swaggerUnitConfiguration.getIgnoreUnknownPathCalls();
+				result = false;
+				swaggerUnitConfiguration.getValidationPathIgnoreList();
+				result = Collections.singletonList(".*");
+			}
+		};
+		URI toTest = URI.create("/v1/notexisting");
+		swaggerUnitCore.validateRequest("GET", toTest, null, "{}");
+	}
+
 	@Test
 	public void testMissingBodyFields() {
 		thrown.expect(SwaggerValidationException.class);
