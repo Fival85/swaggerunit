@@ -23,6 +23,16 @@ public class ResponseDto {
 		this.body = body;
 	}
 
+	private ResponseDto(Builder builder) {
+		this.statusCode = builder.statusCode;
+		this.headers = builder.headers;
+		this.body = builder.body;
+	}
+
+	public static Builder newResponseDto() {
+		return new Builder();
+	}
+
 	public int getStatusCode() {
 		return statusCode;
 	}
@@ -45,5 +55,33 @@ public class ResponseDto {
 
 	public void setBody(String body) {
 		this.body = body;
+	}
+
+	public static final class Builder {
+		private int statusCode;
+		private Map<String, List<String>> headers;
+		private String body;
+
+		private Builder() {
+		}
+
+		public ResponseDto build() {
+			return new ResponseDto(this);
+		}
+
+		public Builder statusCode(int statusCode) {
+			this.statusCode = statusCode;
+			return this;
+		}
+
+		public Builder headers(Map<String, List<String>> headers) {
+			this.headers = headers;
+			return this;
+		}
+
+		public Builder body(String body) {
+			this.body = body;
+			return this;
+		}
 	}
 }

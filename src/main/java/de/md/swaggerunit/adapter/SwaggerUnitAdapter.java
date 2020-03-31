@@ -1,7 +1,6 @@
 package de.md.swaggerunit.adapter;
 
 import de.md.swaggerunit.usage.SwaggerUnitRule;
-import de.md.swaggerunit.usage.ValidationScope;
 
 /**
  * this interface could be used to connect a http client (used in your junit test) with the {@link SwaggerUnitRule}. The rule
@@ -12,16 +11,8 @@ import de.md.swaggerunit.usage.ValidationScope;
 public interface SwaggerUnitAdapter {
 
 	/**
-	 * Implement this, to return the request information. SwaggerUnit needs this to validate.
-	 *
-	 * @return
+	 * Implement this, to return the response and request informations for swaggerunit to validate.
 	 */
-	RequestDto getRequest();
-
-	/**
-	 * Implement this, to return the response information. SwaggerUnit needs this to validate.
-	 * @return
-	 */
-	ResponseDto getResponse();
+	SwaggerUnitValidation[] getSwaggerUnitValidations();
 
 }

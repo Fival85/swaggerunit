@@ -20,15 +20,20 @@ import java.util.List;
 public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfiguration {
 
 	private String swaggerSourceOverride;
-
 	private String swaggerLoginUrl;
-
 	private String swaggerLoginUsername;
-
 	private String swaggerLoginPassword;    //NOSONAR
 	private String fallbackContentType;
 	private Boolean ignoreUnknownPathCalls;
 	private List<String> validationPathIgnoreList;
+	private String swaggerSource;
+
+	public SwaggerUnitRestAssuredConfigurationImpl() {
+	}
+
+	public SwaggerUnitRestAssuredConfigurationImpl(String swaggerSource) {
+		this.swaggerSource = swaggerSource;
+	}
 
 	public SwaggerUnitRestAssuredConfigurationImpl(String swaggerSourceOverride, String swaggerLoginUrl,
 			String swaggerLoginUsername, String swaggerLoginPassword) {
@@ -76,7 +81,11 @@ public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfi
 
 	@Override
 	public String getSwaggerSource() {
-		return null;
+		return swaggerSource;
+	}
+
+	public void setSwaggerSource(String swaggerSource) {
+		this.swaggerSource = swaggerSource;
 	}
 
 	@Override
@@ -116,7 +125,7 @@ public class SwaggerUnitRestAssuredConfigurationImpl implements SwaggerUnitConfi
 		return validationPathIgnoreList;
 	}
 
-	public void setvalidationPathIgnoreList(List<String> validationPathIgnoreList) {
+	public void setValidationPathIgnoreList(List<String> validationPathIgnoreList) {
 		this.validationPathIgnoreList = validationPathIgnoreList;
 	}
 

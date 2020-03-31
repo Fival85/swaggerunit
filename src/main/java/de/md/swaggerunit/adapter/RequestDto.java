@@ -26,6 +26,17 @@ public class RequestDto {
 		this.body = body;
 	}
 
+	private RequestDto(Builder builder) {
+		this.method = builder.method;
+		this.uri = builder.uri;
+		this.headers = builder.headers;
+		this.body = builder.body;
+	}
+
+	public static Builder newRequestDto() {
+		return new Builder();
+	}
+
 	public String getMethod() {
 		return method;
 	}
@@ -56,5 +67,39 @@ public class RequestDto {
 
 	public void setBody(String body) {
 		this.body = body;
+	}
+
+	public static final class Builder {
+		private String method;
+		private URI uri;
+		private Map<String, List<String>> headers;
+		private String body;
+
+		private Builder() {
+		}
+
+		public RequestDto build() {
+			return new RequestDto(this);
+		}
+
+		public Builder method(String method) {
+			this.method = method;
+			return this;
+		}
+
+		public Builder uri(URI uri) {
+			this.uri = uri;
+			return this;
+		}
+
+		public Builder headers(Map<String, List<String>> headers) {
+			this.headers = headers;
+			return this;
+		}
+
+		public Builder body(String body) {
+			this.body = body;
+			return this;
+		}
 	}
 }

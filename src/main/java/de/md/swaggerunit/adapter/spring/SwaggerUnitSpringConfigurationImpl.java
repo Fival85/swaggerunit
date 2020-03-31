@@ -38,11 +38,11 @@ public class SwaggerUnitSpringConfigurationImpl implements SwaggerUnitConfigurat
 
 	@Value("${swaggerunit.source:}")
 	private String swaggerSource;
-	@Value("${swaggerunit.fallbackContentType:")
+	@Value("${swaggerunit.fallbackContentType:}")
 	private String fallbackContentType;
-	@Value("${swaggerunit.validation.ignoreUnknownPathCalls")
+	@Value("${swaggerunit.validation.ignoreUnknownPathCalls:false}")
 	private Boolean ignoreUnknownPathCalls;
-	@Value("${swaggerunit.validation.paths.ignorelist")
+	@Value("${swaggerunit.validation.paths.ignorelist:[]}")
 	private List<String> validationPathIgnoreList;
 
 	@Override

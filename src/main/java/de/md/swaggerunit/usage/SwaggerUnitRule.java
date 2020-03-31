@@ -1,7 +1,7 @@
 package de.md.swaggerunit.usage;
 
-import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.SwaggerUnitAdapter;
+import de.md.swaggerunit.adapter.SwaggerUnitValidation;
 import de.md.swaggerunit.core.SwaggerUnitConfiguration;
 import de.md.swaggerunit.core.SwaggerUnitCore;
 import org.junit.rules.MethodRule;
@@ -42,12 +42,14 @@ public class SwaggerUnitRule implements MethodRule {
 				SwaggerValidation annotation = method.getAnnotation(SwaggerValidation.class);
 				if (shouldRunSwaggerValidation(annotation)) {
 					// get request from adapter  and validate
-					final RequestDto request = adapter.getRequest();
-					if (shouldValidateRequest(annotation)) {
-						unitCore.validateRequest(request);
-					}
-					if (shouldValidateResponse(annotation)) {
-						unitCore.validateResponse(request, adapter.getResponse());
+					final SwaggerUnitValidation[] swaggerUnitValidations = adapter.getSwaggerUnitValidations();
+					for (SwaggerUnitValidation swaggerUnitValidation : swaggerUnitValidations) {
+						if (shouldValidateRequest(annotation)) {
+							unitCore.validateRequest(swaggerUnitValidation.getRequest());
+						}
+						if (shouldValidateResponse(annotation)) {
+							unitCore.validateResponse(swaggerUnitValidation.getRequest(), swaggerUnitValidation.getResponse());
+						}
 					}
 				}
 			}

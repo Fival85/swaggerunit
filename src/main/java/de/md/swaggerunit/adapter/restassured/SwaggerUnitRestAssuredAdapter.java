@@ -3,23 +3,21 @@ package de.md.swaggerunit.adapter.restassured;
 import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.ResponseDto;
 import de.md.swaggerunit.adapter.SwaggerUnitAdapter;
+import de.md.swaggerunit.adapter.SwaggerUnitValidation;
 import io.restassured.config.HttpClientConfig;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.ExecutionContext;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +31,7 @@ import java.util.TreeMap;
 public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClientFactory, SwaggerUnitAdapter {
 
 	private AbstractHttpClient httpClient;
-	private HttpRequest request;
-	private RequestDto requestDto;
-	private ResponseDto responseDto;
+	private List<SwaggerUnitValidation> swaggerUnitValidationList = new ArrayList<>();
 
 	public SwaggerUnitRestAssuredAdapter(AbstractHttpClient httpClient) {
 		super();
@@ -44,21 +40,9 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 
 	@Override
 	public HttpClient createHttpClient() {
-		httpClient.addRequestInterceptor((request, context) -> validateRequestInterceptor(request));
+		httpClient.addRequestInterceptor(this::validateRequestInterceptor);
 		httpClient.addResponseInterceptor(this::validateResponseInterceptor);
 		return httpClient;
-	}
-
-	/**
-	 * Test if the response body of a response is formatted as json. This function doesn't actually inspect the body, if just
-	 * checks if the content-type header contains something like "application/json".
-	 *
-	 * @param response -
-	 * @return true if the response body is formatted as json.
-	 */
-	private boolean isJsonResponse(HttpResponse response) {
-		return response.getFirstHeader("content-type") != null && response.getFirstHeader("content-type").getValue()
-				.contains("application/json");
 	}
 
 	/**
@@ -67,9 +51,10 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 	 * @param request -
 	 * @throws IOException -
 	 */
-	private void validateRequestInterceptor(HttpRequest request) throws IOException {
-		this.request = request;
-		this.requestDto = new RequestDto();
+	private void validateRequestInterceptor(HttpRequest request, HttpContext httpContext) throws IOException {
+		httpContext.setAttribute("test", "test");
+//		this.request = request;
+		RequestDto requestDto = new RequestDto();
 		requestDto.setMethod(request.getRequestLine().getMethod());
 		requestDto.setUri(URI.create(request.getRequestLine().getUri()));
 		byte[] body = new byte[0];
@@ -87,6 +72,7 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 			headers.put(header.getName(), Collections.singletonList(header.getValue()));
 		}
 		requestDto.setHeaders(headers);
+		httpContext.setAttribute("requestDto", requestDto);
 	}
 
 	/**
@@ -97,30 +83,19 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 	 * @throws IOException -
 	 */
 	private void validateResponseInterceptor(HttpResponse response, HttpContext context) throws IOException {
-
-		HttpHost target = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
-		request.removeHeaders(HTTP.CONTENT_LEN);
-		HttpEntity resEntity = new DefaultHttpClient().execute(target, request).getEntity();
-		byte[] body = new byte[0];
-		if (resEntity != null) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			resEntity.writeTo(baos);
-			body = baos.toByteArray();
-		}
+		final RequestDto requestDto = (RequestDto) context.getAttribute("requestDto");
 		Map<String, List<String>> headers = new HashMap<>();
 		for (Header header : response.getAllHeaders()) {
 			headers.put(header.getName(), Collections.singletonList(header.getValue()));
 		}
-		responseDto = new ResponseDto(response.getStatusLine().getStatusCode(), headers, new String(body));
+		ResponseDto responseDto = new ResponseDto(response.getStatusLine().getStatusCode(), headers,
+				new String(response.getEntity().getContent().readAllBytes()));
+		swaggerUnitValidationList.add(new SwaggerUnitValidation(requestDto, responseDto));
 	}
 
 	@Override
-	public RequestDto getRequest() {
-		return requestDto;
+	public SwaggerUnitValidation[] getSwaggerUnitValidations() {
+		return swaggerUnitValidationList.toArray(SwaggerUnitValidation[]::new);
 	}
 
-	@Override
-	public ResponseDto getResponse() {
-		return responseDto;
-	}
 }

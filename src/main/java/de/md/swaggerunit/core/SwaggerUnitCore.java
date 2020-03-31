@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.ResponseDto;
+import de.md.swaggerunit.adapter.SwaggerUnitValidation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
@@ -264,7 +265,7 @@ public class SwaggerUnitCore {
 		}
 	}
 
-	public ApiOperationMatch getApiOperation(OpenAPI openAPI, String path, Request.Method method) {
+	ApiOperationMatch getApiOperation(OpenAPI openAPI, String path, Request.Method method) {
 		return new ApiOperationResolver(openAPI, null).findApiOperation(path, method);
 	}
 

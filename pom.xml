@@ -19,6 +19,15 @@
     <scm>
         <url>https://github.com/mobilcom-debitel/swaggerunit</url>
     </scm>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.9</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>com.atlassian.oai</groupId>
@@ -53,7 +62,7 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-            <version>4.1.1</version>
+            <version>4.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.jmockit</groupId>
@@ -72,6 +81,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${org.springframework.boot.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-junit-rule</artifactId>
+            <version>5.10.0</version>
         </dependency>
     </dependencies>
     <build>
