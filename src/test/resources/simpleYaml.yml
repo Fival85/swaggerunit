@@ -29,6 +29,18 @@ paths:
           description: Die möglichen Spezialisierungen
           schema:
             $ref: "#/definitions/simpleObject"
+  "/v1/post/withBody":
+    post:
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: "#/definitions/simpleObject"
+      responses:
+        200:
+          description: Die möglichen Spezialisierungen
+          schema:
+            $ref: "#/definitions/simpleObject"
 
 definitions:
   simpleString:

@@ -13,8 +13,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.ResponseDto;
-import de.md.swaggerunit.adapter.SwaggerUnitValidation;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import org.slf4j.Logger;
@@ -206,14 +206,16 @@ public class SwaggerUnitCore {
 		validationReport = cleanUpValidationReport(validationReport, apiOperation);
 		//TODO: move this to a method called by cleanUpValidationReport and create a configuration value for this feature
 		if (apiOperation.isPathFound() && apiOperation.isOperationAllowed()) {
-			Collection<Message> validationHeaderMessages = apiOperation.getApiOperation().getOperation().getParameters()
-					.stream()
-					.filter(param -> "header".equalsIgnoreCase(param.getIn()) && param.getRequired() && (headers == null
-							|| !headers.containsKey(param.getName()))).map(param -> new HeaderMessage(param.getName(),
-							String.format("Mandatory header \"%s\" is not set.", param.getName())))
-					.collect(Collectors.toList());
-			ValidationReport validationHeaderReport = ValidationReport.from(validationHeaderMessages);
-			validationReport = validationReport.merge(validationHeaderReport);
+			final List<Parameter> parameters = apiOperation.getApiOperation().getOperation().getParameters();
+			if (parameters != null) {
+				Collection<Message> validationHeaderMessages = parameters.stream()
+						.filter(param -> "header".equalsIgnoreCase(param.getIn()) && param.getRequired() && (headers == null
+								|| !headers.containsKey(param.getName()))).map(param -> new HeaderMessage(param.getName(),
+								String.format("Mandatory header \"%s\" is not set.", param.getName())))
+						.collect(Collectors.toList());
+				ValidationReport validationHeaderReport = ValidationReport.from(validationHeaderMessages);
+				validationReport = validationReport.merge(validationHeaderReport);
+			}
 		}
 		processValidationReport(validationReport);
 	}
