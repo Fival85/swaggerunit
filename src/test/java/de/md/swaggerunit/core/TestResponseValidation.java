@@ -60,24 +60,4 @@ public class TestResponseValidation {
 				.validateResponse("GET", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, responseBody);
 	}
 
-	@Test
-	public void testValid() {
-		String responseBody = "{\"valid\": true}";
-
-		Map<String, List<String>> headers = new HashMap<>();
-
-		swaggerUnitCore
-				.validateResponse("GET", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, responseBody);
-	}
-
-	/**
-	 * Path found but apiOperation not allowed, so no validation took place.
-	 */
-	@Test
-	public void testMethodNotInSwagger() {
-		Map<String, List<String>> headers = new HashMap<>();
-
-		swaggerUnitCore.validateResponse("PUT", 200, URI.create("/v1/contracts/reactivation/MC.12345/check"), headers, null);
-	}
-
 }

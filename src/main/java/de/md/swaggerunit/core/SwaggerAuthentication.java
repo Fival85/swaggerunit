@@ -26,6 +26,11 @@ public class SwaggerAuthentication {
 	private final SwaggerUnitConfiguration swaggerUnitConfiguration;
 	private Optional<String> authToken = Optional.empty();
 
+	/**
+	 * TODO: use another http client as spring
+	 * @param swaggerUnitHttpClient
+	 * @param swaggerUnitConfiguration
+	 */
 	public SwaggerAuthentication(RestTemplate swaggerUnitHttpClient, SwaggerUnitConfiguration swaggerUnitConfiguration) {
 		this.swaggerUnitHttpClient = swaggerUnitHttpClient;
 		this.swaggerUnitConfiguration = swaggerUnitConfiguration;

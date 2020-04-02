@@ -17,19 +17,19 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -66,17 +66,11 @@ public class SwaggerUnitCore {
 		init();
 	}
 
-//	@Inject
-//	public SwaggerUnitCore(SwaggerUnitConfiguration config, SwaggerAuthentication authentication) {
-//		this.config = config;
-//		this.authentication = authentication;
-//		init();
-//	}
 	// Initialisation
 
 	/**
 	 * Initialized the SwaggerUnitCore.
-	 * Exception from the initialization process will be hided until the system property swaggerunit.validation.strict is set to "true"
+	 * Exception from the initialization process will be hided until the system property "swaggerunit.validation.strict" is set to "true"
 	 */
 	private void init() {
 		try {
@@ -84,11 +78,7 @@ public class SwaggerUnitCore {
 			initValidator();
 		} catch (Exception ex) {
 			//TODO move this to the initialization method where it is need
-			if (ex instanceof RestClientException) {
-				LOGGER.error("Exception for http call to {}", config.getSwaggerLoginUrl());
-			} else {
-				LOGGER.error("Swagger from '" + config.getSwaggerSourceOverride() + "' couldn't be initialized", ex);
-			}
+			LOGGER.error("Swagger from '" + config.getSwaggerSource() + "' couldn't be initialized", ex);
 			if (STRICT_VALIDATION_VALUE.equalsIgnoreCase(System.getProperty(STRICT_VALIDATION_KEY))) {
 				throw ex;
 			}
@@ -97,6 +87,11 @@ public class SwaggerUnitCore {
 		}
 	}
 
+	/**
+	 * Try to load the swagger from different sources:
+	 * 1. try to load from http
+	 * 2. try to load from file
+	 */
 	private void initSwagger() {
 		openAPI = tryToLoadSwaggerFromHttp();
 		if (openAPI == null) {
@@ -130,11 +125,19 @@ public class SwaggerUnitCore {
 		if (!isUrl(swaggerSourceUrl)) {
 			return null;
 		}
-		return new OpenAPIV3Parser()
-				.readLocation(swaggerSourceUrl, authentication.getAuth().map(Arrays::asList).orElse(null), new ParseOptions())
-				.getOpenAPI();
+		try {
+			return new OpenAPIV3Parser()
+					.readLocation(swaggerSourceUrl, authentication.getAuth().map(Arrays::asList).orElse(null),
+							new ParseOptions()).getOpenAPI();
+		} catch (RestClientException e) {
+			LOGGER.error("Swagger loading: Exception for http call for to {}", config.getSwaggerLoginUrl());
+			return null;
+		}
 	}
 
+	/**
+	 * Initialize the Atlassian OpenApi-Validator.
+	 */
 	void initValidator() {
 		String swaggerSource = getSwaggerSource();
 		final OpenApiInteractionValidator.Builder builder = OpenApiInteractionValidator.createFor(swaggerSource);
@@ -163,7 +166,7 @@ public class SwaggerUnitCore {
 	}
 
 	/**
-	 * Validiert den Request gegen die YAML.
+	 * validates the request with the Atlassian Validator.
 	 *
 	 * @param method  -
 	 * @param uri     -
@@ -173,6 +176,7 @@ public class SwaggerUnitCore {
 	public void validateRequest(String method, URI uri, Map<String, List<String>> headers, String body) {
 		Method requestMethod = Method.valueOf(method);
 		SimpleRequest.Builder requestBuilder = new SimpleRequest.Builder(requestMethod, uri.getPath()).withBody(body);
+		// collect headers
 		if (headers != null) {
 			headers.forEach(requestBuilder::withHeader);
 		}
@@ -180,27 +184,13 @@ public class SwaggerUnitCore {
 		if (headers == null || !headers.containsKey("content-type")) {
 			requestBuilder.withHeader("content-type", getFallbackContentTypeHeaderValue());
 		}
-		String rawQuery = uri.getQuery();
-		Map<String, List<String>> parsedQueryParams = new HashMap<>();
-		if (rawQuery != null && !rawQuery.isEmpty()) {
-			String[] queryParams = rawQuery.split("&");
-			for (String queryParam : queryParams) {
-				String[] split = queryParam.split("=");
-				if (split.length == 2) {
-					String key = split[0];
-					String value = split[1];
-					if (parsedQueryParams.containsKey(key)) {
-						parsedQueryParams.get(key).add(value);
-					} else {
-						List<String> values = new ArrayList<>();
-						values.add(value);
-						parsedQueryParams.put(key, values);
-					}
-				}
-			}
-		}
+		// collect query params
+		final List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, Charset.forName("UTF-8"));
+		Map<String, List<String>> parsedQueryParams = queryParams.stream()
+				.collect(Collectors.toMap(NameValuePair::getName, parameter -> List.of(parameter.getValue().split(","))));
 		parsedQueryParams.forEach(requestBuilder::withQueryParam);
 		SimpleRequest simpleRequest = requestBuilder.build();
+		// calls the Atlassian validator
 		ValidationReport validationReport = validator.validateRequest(simpleRequest);
 
 		ApiOperationMatch apiOperation = getApiOperation(openAPI, uri.getPath(), Method.valueOf(method));
@@ -286,15 +276,9 @@ public class SwaggerUnitCore {
 			responseBuilder.withHeader("content-type", getFallbackContentTypeHeaderValue());
 		}
 
-		ApiOperationMatch apiOperation = getApiOperation(openAPI, uri.getPath(), Method.valueOf(method));
-		// Only validate if path exists in swagger
-		if (apiOperation.isPathFound() && apiOperation.isOperationAllowed()) {
-			SimpleResponse response = responseBuilder.build();
-			ValidationReport validationReport = validator.validateResponse(uri.getPath(), Method.valueOf(method), response);
-			processValidationReport(validationReport);
-		} else {
-			LOGGER.info("Response für URI: {} wurde nicht validiert.", uri);
-		}
+		SimpleResponse response = responseBuilder.build();
+		ValidationReport validationReport = validator.validateResponse(uri.getPath(), Method.valueOf(method), response);
+		processValidationReport(validationReport);
 	}
 
 	private String getFallbackContentTypeHeaderValue() {
