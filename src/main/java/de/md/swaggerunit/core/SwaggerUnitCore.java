@@ -43,13 +43,9 @@ public class SwaggerUnitCore {
 	private static final String STRICT_VALIDATION_VALUE = "true";
 	private static final boolean DEFAULT_IGNORE_UNKNOWN_PATH_CALLS = false;
 	private static final Logger LOGGER = LoggerFactory.getLogger(SwaggerUnitCore.class);
-
 	private SwaggerAuthentication authentication;
-
 	private SwaggerUnitConfiguration config;
-
 	private OpenApiInteractionValidator validator;
-
 	private OpenAPI openAPI;
 
 	/**
@@ -58,18 +54,24 @@ public class SwaggerUnitCore {
 	SwaggerUnitCore() {
 	}
 
+	/**
+	 * Creates a new {@link SwaggerUnitCore} with the given configuration.
+	 *
+	 * @param config the configuration
+	 * @see SwaggerUnitConfiguration
+	 */
 	public SwaggerUnitCore(SwaggerUnitConfiguration config) {
 		this.config = config;
 		this.authentication = new SwaggerAuthentication(new RestTemplate(), config);
 		init();
 	}
 
-	@Inject
-	public SwaggerUnitCore(SwaggerUnitConfiguration config, SwaggerAuthentication authentication) {
-		this.config = config;
-		this.authentication = authentication;
-		init();
-	}
+//	@Inject
+//	public SwaggerUnitCore(SwaggerUnitConfiguration config, SwaggerAuthentication authentication) {
+//		this.config = config;
+//		this.authentication = authentication;
+//		init();
+//	}
 	// Initialisation
 
 	/**
@@ -85,9 +87,7 @@ public class SwaggerUnitCore {
 			if (ex instanceof RestClientException) {
 				LOGGER.error("Exception for http call to {}", config.getSwaggerLoginUrl());
 			} else {
-				LOGGER.error(
-						"Swagger from '" + config.getSwaggerSourceOverride() + "' couldn't be initialized",
-						ex);
+				LOGGER.error("Swagger from '" + config.getSwaggerSourceOverride() + "' couldn't be initialized", ex);
 			}
 			if (STRICT_VALIDATION_VALUE.equalsIgnoreCase(System.getProperty(STRICT_VALIDATION_KEY))) {
 				throw ex;
@@ -232,8 +232,7 @@ public class SwaggerUnitCore {
 					.collect(Collectors.toList());
 			return ValidationReport.from(filteredMessages);
 		} else {
-			if (config.getValidationPathIgnoreList() != null && !config
-					.getValidationPathIgnoreList().isEmpty()) {
+			if (config.getValidationPathIgnoreList() != null && !config.getValidationPathIgnoreList().isEmpty()) {
 				final List<Message> filteredMessages = config.getValidationPathIgnoreList().stream()
 						.map(regex -> validationReport.getMessages().stream()
 								// filter for missing path calls with the configured regular expressions

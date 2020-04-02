@@ -8,16 +8,13 @@ package de.md.swaggerunit.core;
 
 import io.swagger.v3.parser.core.models.AuthorizationValue;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.inject.Inject;
 import java.util.Optional;
 
-@Component
 public class SwaggerAuthentication {
 
 	private static final String LOGIN_FORM_FIELD_PASSWORD = "password"; //NOSONAR
@@ -29,7 +26,6 @@ public class SwaggerAuthentication {
 	private final SwaggerUnitConfiguration swaggerUnitConfiguration;
 	private Optional<String> authToken = Optional.empty();
 
-	@Inject
 	public SwaggerAuthentication(RestTemplate swaggerUnitHttpClient, SwaggerUnitConfiguration swaggerUnitConfiguration) {
 		this.swaggerUnitHttpClient = swaggerUnitHttpClient;
 		this.swaggerUnitConfiguration = swaggerUnitConfiguration;
