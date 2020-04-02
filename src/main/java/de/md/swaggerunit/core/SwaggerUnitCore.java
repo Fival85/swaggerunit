@@ -46,7 +46,7 @@ public class SwaggerUnitCore {
 
 	private SwaggerAuthentication authentication;
 
-	private SwaggerUnitConfiguration swaggerUnitConfiguration;
+	private SwaggerUnitConfiguration config;
 
 	private OpenApiInteractionValidator validator;
 
@@ -58,15 +58,15 @@ public class SwaggerUnitCore {
 	SwaggerUnitCore() {
 	}
 
-	public SwaggerUnitCore(SwaggerUnitConfiguration swaggerUnitConfiguration) {
-		this.swaggerUnitConfiguration = swaggerUnitConfiguration;
-		this.authentication = new SwaggerAuthentication(new RestTemplate(), swaggerUnitConfiguration);
+	public SwaggerUnitCore(SwaggerUnitConfiguration config) {
+		this.config = config;
+		this.authentication = new SwaggerAuthentication(new RestTemplate(), config);
 		init();
 	}
 
 	@Inject
-	public SwaggerUnitCore(SwaggerUnitConfiguration swaggerUnitConfiguration, SwaggerAuthentication authentication) {
-		this.swaggerUnitConfiguration = swaggerUnitConfiguration;
+	public SwaggerUnitCore(SwaggerUnitConfiguration config, SwaggerAuthentication authentication) {
+		this.config = config;
 		this.authentication = authentication;
 		init();
 	}
@@ -81,11 +81,12 @@ public class SwaggerUnitCore {
 			initSwagger();
 			initValidator();
 		} catch (Exception ex) {
+			//TODO move this to the initialization method where it is need
 			if (ex instanceof RestClientException) {
-				LOGGER.error("Exception for http call to {}", swaggerUnitConfiguration.getSwaggerLoginUrl());
+				LOGGER.error("Exception for http call to {}", config.getSwaggerLoginUrl());
 			} else {
 				LOGGER.error(
-						"Swagger from '" + swaggerUnitConfiguration.getSwaggerSourceOverride() + "' couldn't be initialized",
+						"Swagger from '" + config.getSwaggerSourceOverride() + "' couldn't be initialized",
 						ex);
 			}
 			if (STRICT_VALIDATION_VALUE.equalsIgnoreCase(System.getProperty(STRICT_VALIDATION_KEY))) {
@@ -107,9 +108,9 @@ public class SwaggerUnitCore {
 	}
 
 	private String getSwaggerSource() {
-		final String swaggerSourceOverride = swaggerUnitConfiguration.getSwaggerSourceOverride();
+		final String swaggerSourceOverride = config.getSwaggerSourceOverride();
 		return (swaggerSourceOverride == null || swaggerSourceOverride.isBlank()) ?
-				swaggerUnitConfiguration.getSwaggerSource() :
+				config.getSwaggerSource() :
 				swaggerSourceOverride;
 	}
 
@@ -231,9 +232,9 @@ public class SwaggerUnitCore {
 					.collect(Collectors.toList());
 			return ValidationReport.from(filteredMessages);
 		} else {
-			if (swaggerUnitConfiguration.getValidationPathIgnoreList() != null && !swaggerUnitConfiguration
+			if (config.getValidationPathIgnoreList() != null && !config
 					.getValidationPathIgnoreList().isEmpty()) {
-				final List<Message> filteredMessages = swaggerUnitConfiguration.getValidationPathIgnoreList().stream()
+				final List<Message> filteredMessages = config.getValidationPathIgnoreList().stream()
 						.map(regex -> validationReport.getMessages().stream()
 								// filter for missing path calls with the configured regular expressions
 								.filter(message -> !"validation.request.path.missing".equals(message.getKey())  //
@@ -247,7 +248,7 @@ public class SwaggerUnitCore {
 	}
 
 	private boolean shouldUnknownPathCallBeIgnored() {
-		final Boolean ignoreUnknownPathCalls = swaggerUnitConfiguration.getIgnoreUnknownPathCalls();
+		final Boolean ignoreUnknownPathCalls = config.getIgnoreUnknownPathCalls();
 		return ignoreUnknownPathCalls == null ? DEFAULT_IGNORE_UNKNOWN_PATH_CALLS : ignoreUnknownPathCalls;
 	}
 
@@ -298,7 +299,7 @@ public class SwaggerUnitCore {
 	}
 
 	private String getFallbackContentTypeHeaderValue() {
-		final String wishedFallbackContentType = swaggerUnitConfiguration.getFallbackContentType();
+		final String wishedFallbackContentType = config.getFallbackContentType();
 		return wishedFallbackContentType == null || wishedFallbackContentType.isBlank() ?
 				FALLBACK_CONTENT_TYPE_HEADER_VALUE :
 				wishedFallbackContentType;
@@ -309,10 +310,10 @@ public class SwaggerUnitCore {
 	/**
 	 * Only for unit testing purposes
 	 *
-	 * @param swaggerUnitConfiguration
+	 * @param config
 	 */
-	void setSwaggerUnitConfiguration(SwaggerUnitConfiguration swaggerUnitConfiguration) {
-		this.swaggerUnitConfiguration = swaggerUnitConfiguration;
+	void setConfig(SwaggerUnitConfiguration config) {
+		this.config = config;
 	}
 
 	/**

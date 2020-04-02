@@ -14,6 +14,7 @@ import org.mockserver.junit.MockServerRule;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -72,6 +73,49 @@ public class SwaggerUnitRestAssuredAdapterTest {
 				.respond(response().withStatusCode(200).withBody("{\"unknownField\": \"val\"}"));
 		//then
 		given().body(requestBody).header("content-type", "application/json")
+				.post("http://localhost:" + mockServer.getPort() + requestPath);
+		thrown.expect(SwaggerValidationException.class);
+		thrown.expectMessage(
+				containsString("Object instance has properties which are not allowed by the schema: [\"unknownField\"]"));
+	}
+
+	/**
+	 * Test the validation with an valid request body.
+	 */
+	@SwaggerValidation
+	@Test
+	public void testRestAssuredIntegrationWithBodyAndValid() {
+		final String requestPath = "/v1/post/withBody";
+		final String requestBody = "{\"simpleField\" : \"MySpecial\"}";
+		// mock
+		mockServer.getClient().when(request().withBody(requestBody).withPath(requestPath).withMethod("POST")).respond(
+				response().withStatusCode(200).withHeader("content-type", "application/json")
+						.withBody("{\"simpleField\": \"val\"}"));
+		//then
+		given().body(requestBody).header("content-type", "application/json")
+				.post("http://localhost:" + mockServer.getPort() + requestPath).then().statusCode(200)
+				.body("simpleField", equalTo("val"));
+
+	}
+
+	/**
+	 * Test the validation with an more then one request. The second request should produce an error.
+	 */
+	@SwaggerValidation
+	@Test
+	public void testRestAssuredIntegrationWithTwoRequest() {
+		final String requestPath = "/v1/post/withBody";
+		final String validRequestBody = "{\"simpleField\" : \"MySpecial\"}";
+		final String invalidRequestBody = "{\"unknownField\" : \"MySpecial\"}";
+		;
+		// mock
+		mockServer.getClient().when(request().withBody(validRequestBody).withPath(requestPath).withMethod("POST"))
+				.respond(response().withStatusCode(200).withBody("{\"unknownField\": \"val\"}"));
+		//then
+		given().body(validRequestBody).header("content-type", "application/json")
+				.post("http://localhost:" + mockServer.getPort() + requestPath).then();
+		given().config(RestAssured.config().httpClient(HttpClientConfig.httpClientConfig().reuseHttpClientInstance()))
+				.body(invalidRequestBody).header("content-type", "application/json")
 				.post("http://localhost:" + mockServer.getPort() + requestPath);
 		thrown.expect(SwaggerValidationException.class);
 		thrown.expectMessage(

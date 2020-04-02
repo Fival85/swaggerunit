@@ -9,10 +9,15 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
@@ -52,11 +57,9 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 	 * @throws IOException -
 	 */
 	private void validateRequestInterceptor(HttpRequest request, HttpContext httpContext) throws IOException {
-		httpContext.setAttribute("test", "test");
-//		this.request = request;
-		RequestDto requestDto = new RequestDto();
-		requestDto.setMethod(request.getRequestLine().getMethod());
-		requestDto.setUri(URI.create(request.getRequestLine().getUri()));
+		RequestDto requestInformation = new RequestDto();
+		requestInformation.setMethod(request.getRequestLine().getMethod());
+		requestInformation.setUri(URI.create(request.getRequestLine().getUri()));
 		byte[] body = new byte[0];
 		if (request instanceof HttpEntityEnclosingRequest) {
 			HttpEntity reqEntity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -66,13 +69,14 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 				body = baos.toByteArray();
 			}
 		}
-		requestDto.setBody(new String(body));
+		requestInformation.setBody(new String(body));
 		Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		for (Header header : request.getAllHeaders()) {
 			headers.put(header.getName(), Collections.singletonList(header.getValue()));
 		}
-		requestDto.setHeaders(headers);
-		httpContext.setAttribute("requestDto", requestDto);
+		requestInformation.setHeaders(headers);
+		httpContext.setAttribute("requestInformation", requestInformation);
+		httpContext.setAttribute("apacheHttpRequest", request);
 	}
 
 	/**
@@ -83,13 +87,19 @@ public class SwaggerUnitRestAssuredAdapter implements HttpClientConfig.HttpClien
 	 * @throws IOException -
 	 */
 	private void validateResponseInterceptor(HttpResponse response, HttpContext context) throws IOException {
-		final RequestDto requestDto = (RequestDto) context.getAttribute("requestDto");
+		final RequestDto requestDto = (RequestDto) context.getAttribute("requestInformation");
 		Map<String, List<String>> headers = new HashMap<>();
 		for (Header header : response.getAllHeaders()) {
 			headers.put(header.getName(), Collections.singletonList(header.getValue()));
 		}
+		final HttpRequest originalHttpRequest = (HttpRequest) context.getAttribute("apacheHttpRequest");
+		// else an exception will be thrown "org.apache.http.ProtocolException: Content-Length header already present"
+		HttpHost target = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
+		originalHttpRequest.removeHeaders(HTTP.CONTENT_LEN);
+		//TODO this is an ugly solution and it will only work for non indempotent requests.
+		final CloseableHttpResponse reproducedResponse = new DefaultHttpClient().execute(target, originalHttpRequest);
 		ResponseDto responseDto = new ResponseDto(response.getStatusLine().getStatusCode(), headers,
-				new String(response.getEntity().getContent().readAllBytes()));
+				new String(reproducedResponse.getEntity().getContent().readAllBytes()));
 		swaggerUnitValidationList.add(new SwaggerUnitValidation(requestDto, responseDto));
 	}
 

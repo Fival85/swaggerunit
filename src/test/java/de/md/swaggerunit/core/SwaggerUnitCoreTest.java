@@ -17,7 +17,7 @@ public class SwaggerUnitCoreTest {
 
 	@Before
 	public void setUp() {
-		coreToTest.setSwaggerUnitConfiguration(givenConfig);
+		coreToTest.setConfig(givenConfig);
 	}
 
 	@Test
