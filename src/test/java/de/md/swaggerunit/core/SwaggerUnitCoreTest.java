@@ -1,6 +1,7 @@
 package de.md.swaggerunit.core;
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator;
+import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.classic.SwaggerUnitClassicConfiguration;
 import io.swagger.v3.oas.models.OpenAPI;
 import org.junit.Before;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertThat;
 
 public class SwaggerUnitCoreTest {
 	private final SwaggerUnitClassicConfiguration givenConfig = new SwaggerUnitClassicConfiguration("/simpleYaml.yml");
-	private final SwaggerUnitCore coreToTest = new SwaggerUnitCore();
+	private final SwaggerUnitCore coreToTest = new SwaggerUnitCore(givenConfig);
 
 	@Before
 	public void setUp() {
@@ -47,9 +48,10 @@ public class SwaggerUnitCoreTest {
 
 	@Test
 	public void testCollectQueryParamsWithCommaSeparetedList() {
-		URI givenUri = URI.create("/test?arr=2,2testCollectQueryParamsWithCommaSeparatedList4&arr=3");
+		URI givenUri = URI.create("/test?arr=2,2,4&arr=3");
 		final Map<String, List<String>> queryParams = coreToTest.getQueryParams(givenUri);
 		assertThat(queryParams.containsKey("arr"), is(true));
 		assertThat(queryParams.get("arr"), is(List.of("2", "2", "4", "3")));
 	}
+
 }

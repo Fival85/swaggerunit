@@ -1,7 +1,9 @@
 package de.md.swaggerunit.core;
 
+import de.md.swaggerunit.adapter.RequestDto;
 import mockit.Expectations;
 import mockit.Injectable;
+import mockit.Mocked;
 import mockit.Tested;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -54,7 +56,7 @@ public class TestRequestValidation {
 	public void oneHeaderMissing_shouldFail() {
 		thrown.expect(SwaggerValidationException.class);
 		thrown.expectMessage(containsString(
-				"Header parameter 'Agent' is required on path '/v1/contracts/tariffSwap' but not found in request. Mandatory header \"Agent\" is not set."));
+				"Header parameter 'Agent' is required on path '/v1/contracts/tariffSwap' but not found in request."));
 		URI toTest = URI.create("/v1/contracts/tariffSwap?contractId=mc.123324");
 		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<String, List<String>>() {
 			{
@@ -122,15 +124,6 @@ public class TestRequestValidation {
 	}
 
 	@Test
-	public void testErrorMessageGetsAdditionalInformationOnMissingHeaders() {
-		thrown.expect(SwaggerValidationException.class);
-		thrown.expectMessage(containsString("Mandatory header \"Agent\" is not set."));
-		URI toTest = URI.create("/v1/contracts/tariffSwap?contractId=mc.123324");
-		Map<String, List<String>> headers = new HashMap<>();
-		swaggerUnitCore.validateRequest("GET", toTest, headers, null);
-	}
-
-	@Test
 	public void allHeaderMissing_shouldFail() {
 		thrown.expect(SwaggerValidationException.class);
 		thrown.expectMessage(containsString(
@@ -173,10 +166,10 @@ public class TestRequestValidation {
 	@Test
 	//TODO i realy do not understand why the expectation dont work
 	@Ignore
-	public void testValidation_withPathParams() {
+	public void testValidation_withPathParams(@Mocked SwaggerUnitConfiguration config) {
 		new Expectations() {
 			{
-				swaggerUnitConfiguration.getSwaggerSource();
+				config.getSwaggerSource();
 				result = "swaggerDefinition2.yml";
 			}
 		};

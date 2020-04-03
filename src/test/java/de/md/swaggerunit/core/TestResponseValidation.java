@@ -42,9 +42,11 @@ public class TestResponseValidation {
 	 */
 	@Test
 	public void testURINotInSwagger() {
+		thrown.expect(SwaggerValidationException.class);
+		thrown.expectMessage("No API path found that matches request '/different/uri'");
 		Map<String, List<String>> headers = new HashMap<>();
-
 		swaggerUnitCore.validateResponse("GET", 200, URI.create("/different/uri"), headers, null);
+
 	}
 
 	/**

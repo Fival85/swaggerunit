@@ -50,12 +50,6 @@ public class SwaggerUnitCore {
 	private OpenAPI openAPI;
 
 	/**
-	 * Constructor without automatically initialization for unit-test purposes.
-	 */
-	SwaggerUnitCore() {
-	}
-
-	/**
 	 * Creates a new {@link SwaggerUnitCore} with the given configuration.
 	 *
 	 * @param config the configuration
@@ -195,19 +189,6 @@ public class SwaggerUnitCore {
 
 		ApiOperationMatch apiOperation = getApiOperation(openAPI, uri.getPath(), Method.valueOf(method));
 		validationReport = cleanUpValidationReport(validationReport, apiOperation);
-		//TODO: move this to a method called by cleanUpValidationReport and create a configuration value for this feature
-		if (apiOperation.isPathFound() && apiOperation.isOperationAllowed()) {
-			final List<Parameter> parameters = apiOperation.getApiOperation().getOperation().getParameters();
-			if (parameters != null) {
-				Collection<Message> validationHeaderMessages = parameters.stream()
-						.filter(param -> "header".equalsIgnoreCase(param.getIn()) && param.getRequired() && (headers == null
-								|| !headers.containsKey(param.getName()))).map(param -> new HeaderMessage(param.getName(),
-								String.format("Mandatory header \"%s\" is not set.", param.getName())))
-						.collect(Collectors.toList());
-				ValidationReport validationHeaderReport = ValidationReport.from(validationHeaderMessages);
-				validationReport = validationReport.merge(validationHeaderReport);
-			}
-		}
 		processValidationReport(validationReport);
 	}
 

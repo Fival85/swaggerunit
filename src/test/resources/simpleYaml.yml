@@ -7,7 +7,6 @@ consumes:
 produces:
   - application/json
 paths:
-
   "/test/simpleString":
     get:
       summary: returns simply a string
@@ -41,7 +40,19 @@ paths:
           description: Die möglichen Spezialisierungen
           schema:
             $ref: "#/definitions/simpleObject"
-
+  "/test/with/required/header":
+    get:
+      summary: returns simply a string
+      parameters:
+        - name: required
+          required: true
+          type: string
+          in: header
+      responses:
+        200:
+          description: Zum InteractionType gehörendes Schema
+          schema:
+            $ref: "#/definitions/simpleString"
 definitions:
   simpleString:
     type: string
