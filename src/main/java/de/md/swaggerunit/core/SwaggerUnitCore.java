@@ -17,6 +17,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.slf4j.Logger;
@@ -184,11 +185,10 @@ public class SwaggerUnitCore {
 		if (headers == null || !headers.containsKey("content-type")) {
 			requestBuilder.withHeader("content-type", getFallbackContentTypeHeaderValue());
 		}
-		// collect query params
-		final List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, Charset.forName("UTF-8"));
-		Map<String, List<String>> parsedQueryParams = queryParams.stream()
-				.collect(Collectors.toMap(NameValuePair::getName, parameter -> List.of(parameter.getValue().split(","))));
-		parsedQueryParams.forEach(requestBuilder::withQueryParam);
+
+		final Map<String, List<String>> queryParams = getQueryParams(uri);
+		queryParams.forEach(requestBuilder::withQueryParam);
+
 		SimpleRequest simpleRequest = requestBuilder.build();
 		// calls the Atlassian validator
 		ValidationReport validationReport = validator.validateRequest(simpleRequest);
@@ -209,6 +209,18 @@ public class SwaggerUnitCore {
 			}
 		}
 		processValidationReport(validationReport);
+	}
+
+	/**
+	 * Returns the query parameters from the given uri.
+	 *
+	 * @param uri the request uri
+	 * @return a map with query param name as key and query value(s) as list value
+	 */
+	Map<String, List<String>> getQueryParams(URI uri) {
+		final List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, Charset.forName("UTF-8"));
+		return queryParams.stream().collect(Collectors
+				.toMap(NameValuePair::getName, parameter -> List.of(parameter.getValue().split(",")), ListUtils::union));
 	}
 
 	private ValidationReport cleanUpValidationReport(ValidationReport validationReport, ApiOperationMatch apiOperation) {
