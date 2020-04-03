@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.md.swaggerunit.adapter.RequestDto;
 import de.md.swaggerunit.adapter.ResponseDto;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import org.apache.commons.collections4.ListUtils;
@@ -28,9 +27,8 @@ import org.springframework.web.client.RestTemplate;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,6 +38,7 @@ public class SwaggerUnitCore {
 	public static final String SKIP_VALIDATION_VALUE = "true";
 	public static final String SKIP_VALIDATION_KEY = "swaggerunit.validation.skip";
 	public static final String FALLBACK_CONTENT_TYPE_HEADER_VALUE = "application/json";
+	public static final String HEADER_CONTENT_TYPE = "content-type";
 	private static final String STRICT_VALIDATION_KEY = "swaggerunit.validation.strict";
 	private static final String STRICT_VALIDATION_VALUE = "true";
 	private static final boolean DEFAULT_IGNORE_UNKNOWN_PATH_CALLS = false;
@@ -72,7 +71,6 @@ public class SwaggerUnitCore {
 			initSwagger();
 			initValidator();
 		} catch (Exception ex) {
-			//TODO move this to the initialization method where it is need
 			LOGGER.error("Swagger from '" + config.getSwaggerSource() + "' couldn't be initialized", ex);
 			if (STRICT_VALIDATION_VALUE.equalsIgnoreCase(System.getProperty(STRICT_VALIDATION_KEY))) {
 				throw ex;
@@ -176,8 +174,8 @@ public class SwaggerUnitCore {
 			headers.forEach(requestBuilder::withHeader);
 		}
 		// the used validator from Atlassian does not validate if no content-type is set, so we set a fallback
-		if (headers == null || !headers.containsKey("content-type")) {
-			requestBuilder.withHeader("content-type", getFallbackContentTypeHeaderValue());
+		if (headers == null || !headers.containsKey(HEADER_CONTENT_TYPE)) {
+			requestBuilder.withHeader(HEADER_CONTENT_TYPE, getFallbackContentTypeHeaderValue());
 		}
 
 		final Map<String, List<String>> queryParams = getQueryParams(uri);
@@ -187,9 +185,14 @@ public class SwaggerUnitCore {
 		// calls the Atlassian validator
 		ValidationReport validationReport = validator.validateRequest(simpleRequest);
 
-		ApiOperationMatch apiOperation = getApiOperation(openAPI, uri.getPath(), Method.valueOf(method));
-		validationReport = cleanUpValidationReport(validationReport, apiOperation);
+		ValidationReport unknownQueryParamsReport = checkForUnkownQueryParams(queryParams);
+		validationReport = validationReport.merge(unknownQueryParamsReport);
+		validationReport = cleanUpValidationReport(validationReport);
 		processValidationReport(validationReport);
+	}
+
+	private ValidationReport checkForUnkownQueryParams(Map<String, List<String>> queryParams) {
+		return null;
 	}
 
 	/**
@@ -199,12 +202,12 @@ public class SwaggerUnitCore {
 	 * @return a map with query param name as key and query value(s) as list value
 	 */
 	Map<String, List<String>> getQueryParams(URI uri) {
-		final List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, Charset.forName("UTF-8"));
+		final List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
 		return queryParams.stream().collect(Collectors
 				.toMap(NameValuePair::getName, parameter -> List.of(parameter.getValue().split(",")), ListUtils::union));
 	}
 
-	private ValidationReport cleanUpValidationReport(ValidationReport validationReport, ApiOperationMatch apiOperation) {
+	private ValidationReport cleanUpValidationReport(ValidationReport validationReport) {
 		return checkForUnknownPathCalls(validationReport);
 	}
 
@@ -265,8 +268,8 @@ public class SwaggerUnitCore {
 			headers.forEach((k, v) -> responseBuilder.withHeader(k, v.toArray(new String[0])));
 		}
 		// the used validator from Atlassian does not validate if no content-type is set, so we set a fallback
-		if (headers == null || !headers.containsKey("content-type")) {
-			responseBuilder.withHeader("content-type", getFallbackContentTypeHeaderValue());
+		if (headers == null || !headers.containsKey(HEADER_CONTENT_TYPE)) {
+			responseBuilder.withHeader(HEADER_CONTENT_TYPE, getFallbackContentTypeHeaderValue());
 		}
 
 		SimpleResponse response = responseBuilder.build();

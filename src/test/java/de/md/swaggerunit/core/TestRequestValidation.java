@@ -1,6 +1,5 @@
 package de.md.swaggerunit.core;
 
-import de.md.swaggerunit.adapter.RequestDto;
 import mockit.Expectations;
 import mockit.Injectable;
 import mockit.Mocked;
@@ -45,6 +44,19 @@ public class TestRequestValidation {
 		URI toTest = URI.create("/v1/contracts/tariffSwap?contractId=mc.123324");
 
 		@SuppressWarnings("serial") Map<String, List<String>> headers = new HashMap<String, List<String>>() {{
+			put("Channel", Collections.singletonList("App"));
+			put("Agent", Collections.singletonList("Fox Mulder"));
+		}};
+
+		swaggerUnitCore.validateRequest("GET", toTest, headers, null);
+	}
+
+	@Test
+	@Ignore // TODO: fix this with an exception expectation
+	public void testValidationWithUnknownParameter() {
+		URI toTest = URI.create("/v1/contracts/tariffSwap?contractId=mc.123324&unknown=val");
+
+		Map<String, List<String>> headers = new HashMap<>() {{
 			put("Channel", Collections.singletonList("App"));
 			put("Agent", Collections.singletonList("Fox Mulder"));
 		}};
