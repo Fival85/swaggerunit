@@ -39,7 +39,6 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 	 *  </pre>
 	 *
 	 * @param swaggerSource
-	 * @return the swagger source of the swagger
 	 */
 	public SwaggerUnitClassicConfiguration(String swaggerSource) {
 		this.swaggerSource = swaggerSource;
@@ -109,7 +108,6 @@ public class SwaggerUnitClassicConfiguration implements SwaggerUnitConfiguration
 	 *  </pre>
 	 *
 	 * @param swaggerSource
-	 * @return the swagger source of the swagger
 	 */
 	public void setSwaggerSource(String swaggerSource) {
 		this.swaggerSource = swaggerSource;
