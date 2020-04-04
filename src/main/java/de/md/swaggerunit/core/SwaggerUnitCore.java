@@ -185,13 +185,15 @@ public class SwaggerUnitCore {
 		// calls the Atlassian validator
 		ValidationReport validationReport = validator.validateRequest(simpleRequest);
 
-		ValidationReport unknownQueryParamsReport = checkForUnkownQueryParams(queryParams);
-		validationReport = validationReport.merge(unknownQueryParamsReport);
+//		ValidationReport unknownQueryParamsReport = checkForUnknownQueryParams(queryParams);
+//		validationReport = validationReport.merge(unknownQueryParamsReport);
 		validationReport = cleanUpValidationReport(validationReport);
 		processValidationReport(validationReport);
 	}
 
-	private ValidationReport checkForUnkownQueryParams(Map<String, List<String>> queryParams) {
+
+	//TODO implement this
+	ValidationReport checkForUnknownQueryParams(Map<String, List<String>> queryParams) {
 		return null;
 	}
 
